@@ -1,0 +1,26 @@
+### CONFIGURATION FILE ###
+##Load main variables##
+
+installation_path=''
+case='' ## ID ##
+root_dir='' ## Parent directory of the genomes ##
+scripts_dir=${installation_path}/'scripts' ## Armadillo scripts directory. Useful if experimenting with new changes on the code ##
+rois_list=${installation_path}/'lib/ROIs' ## List of regions on interest (BED-formatted) ##
+repeatsDB=${installation_path}/'lib/hg19_repeatmasker_DB_sorted.bed.gz' ## Repeat annotation database ##
+tumor_genome='' 
+control_genome=''
+tumor_cutoff=6
+control_cutoff=3
+gc_content=80 ## Max. %GC allowed in reads ##
+tum_qual=30
+control_qual=0 
+mincov=80 ## Minimum % coverage in control when compared against tumor ##
+mapq=40 ## Minimum mapq after realignment ##
+threads=3
+port='9001' ## Port previously opened for gfClient (Blat) ##
+skip="false" ## Skip the miniBAM alignment. Only works for reanalysing.
+print='false' ## Print a log file of the candidates lost during the analysis ##
+
+##Load scripts##
+repeatmasker_candidates_filter=${scripts_dir}'/repeatmasker_candidates_filter.py'
+mq2vcf_TDvsND=${scripts_dir}'/mq2vcf_TDvsND.py'

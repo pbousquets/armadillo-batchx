@@ -89,7 +89,7 @@ extract_minibam(){
 	        PU=${sample}
 	        RG="@RG\\tID:${sample}\\tSM:${SM}\\tPL:${PL}\\tLB:${LB}\\tPU:${PU}"
 	        allCoords=$(cat ${blat_coords}/${file}) #Save its coords
-	        samtools view -u -G 0x400 ${sample} $allCoords | samtools view -u -G 0x4 - | (samtools fastq -N - 2> /dev/null) |  (bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2> /dev/null) | samtools view -uS - > tmp_files/${file}.bam 
+	        samtools view -u -G 0x400 ${sample} $allCoords | samtools view -u -G 0x4 - | samtools fastq -N - | bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - | samtools view -uS - > tmp_files/${file}.bam 
 	        printf "\r Initial time: ${time}. Files left: $lines        "
 	    else
 	        echo "~" ${blat_coords}/${file} does not exist >> pipeline.log
@@ -99,29 +99,29 @@ extract_minibam(){
 	echo ${time}: Merging ${case} minibams. This may take a while | tee -a pipeline.log
 
 	iter=0
-	cd tmp_files
-	while [ $(ls | grep -v tmp | wc -l) -ne 0 ]
-	do
-	    iter=$((iter+1))
-	    bams=$(ls | grep -v tmp | head -n 1000)
-	    samtools merge tmp_${iter}.bam ${bams}
-	    rm ${bams}
-	done
+#	cd tmp_files
+#	while [ $(ls | grep -v tmp | wc -l) -ne 0 ]
+#	do
+#	    iter=$((iter+1))
+#	    bams=$(ls | grep -v tmp | head -n 1000)
+#	    samtools merge tmp_${iter}.bam ${bams}
+#	    rm ${bams}
+#	done
 
-	if [ ${iter} -gt 1 ]
-	then 
-		samtools merge - tmp_*.bam | samtools sort -@ threads -m 6000000000 -o ../${case}${type}_merged.bam -
-		rm tmp_*.bam
-	else
-		samtools sort -@ ${threads} -m 6000000000 -o ../${case}${type}_merged.bam tmp_1.bam
-		rm tmp_1.bam
-	fi
-	cd ../
-	samtools index ${case}${type}_merged.bam
-
-
-	time=$(date +%x%t%X)
-	echo ${time}: Bam generation successful "\n"| tee -a pipeline.log
+#	if [ ${iter} -gt 1 ]
+#	then 
+#		samtools merge - tmp_*.bam | samtools sort -@ threads -m 6000000000 -o ../${case}${type}_merged.bam -
+#		rm tmp_*.bam
+#	else
+#		samtools sort -@ ${threads} -m 6000000000 -o ../${case}${type}_merged.bam tmp_1.bam
+#		rm tmp_1.bam
+#	fi
+#	cd ../
+#	samtools index ${case}${type}_merged.bam
+#
+#
+#	time=$(date +%x%t%X)
+#	echo ${time}: Bam generation successful "\n"| tee -a pipeline.log
 }
 
 evaluate(){
