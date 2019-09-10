@@ -2,8 +2,8 @@
 
 scripts_dir=$(realpath $0)
 scripts_dir=$(dirname $scripts_dir)/scripts
-. $(scripts_dir)/load_functions.sh #Load functions
-. $(scripts_dir)/default_config.txt  # Load default config
+. ${scripts_dir}/load_functions.sh #Load functions
+. ${scripts_dir}/default_config.txt  # Load default config
 if [ $# = 0 ]
 then
 	generalusage
@@ -22,7 +22,7 @@ then
 elif [ "${mode}" = "data-prep" ]
 then
 	if [ $# = 0 ]
-	then 
+	then
 		python3 ${scripts_dir}/data_prep.py --help
 		exit
 	fi
