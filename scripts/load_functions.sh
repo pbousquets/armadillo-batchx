@@ -4,7 +4,7 @@ generalusage(){
  echo "Usage:
  - armadillo run [options] \t\t\t\t Run armadillo
  - armadillo data-prep -i input -g genome.fa -p port \t Create necessary files to run armadillo for a set of ROIs
- - armadillo config-file \t\t\t\t Create a configuration file to avoid using arguments in run mode. 
+ - armadillo config-file \t\t\t\t Create a configuration file to avoid using arguments in run mode.
 
 Pablo Bousquets - XA Lab
 (2019)"
@@ -34,7 +34,7 @@ usage(){ #Create a function to display the help message
     \t -Q,  --control_qual \t Minimum base quality required to the control genome [0]
     \t -m,  --map_qual \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
     \t -e,  --max_errors \t Maximum sequencing errors in reads [2%]
-    \t -rl,  --read_length \t Reads length [150 bp]
+    \t -rl, --read_length \t Reads length [150 bp]
     \t -g,  --gc_content \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t Threads running in parallel (only applies if parallelize mode on) [3]
