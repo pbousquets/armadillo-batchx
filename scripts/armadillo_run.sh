@@ -1,7 +1,6 @@
 #!/bin/sh
 ## RUN ARMADILLO ##
 STARTTIME=$(date +%s)
-scripts_dir=${installation_path}/'scripts' ## Armadillo scripts directory. Useful if experimenting with new changes on the code ##
 
 ##Display help if no arguments provided
 if [ $# -eq 0 ]
@@ -14,6 +13,7 @@ fi
 if [ -f $1 ] #Arguments or configuration file
 then
 	. $(dirname $1)/$(basename $1) # Read a config file
+	shift
 else
 	parse_arguments $@ #Parse the arguments pass through the command line
 fi
@@ -22,9 +22,8 @@ fi
 ref_genome=${armadillo_data}'/armadillo_reference_genome.fa'
 blat_coords=${armadillo_data}'/rois_copies_coords'
 miniFasta_dir=${armadillo_data}'/miniFASTA'
-
-repeatmasker_candidates_filter=${scripts_dir}'/repeatmasker_candidates_filter.py'
-mq2vcf_TDvsND=${scripts_dir}'/mq2vcf_TDvsND.py'
+repeatmasker_candidates_filter='${scripts_dir}/repeatmasker_candidates_filter.py'
+mq2vcf_TDvsND='${scripts_dir}/mq2vcf_TDvsND.py'
 
 if [ "$print" = 'true' ]
 then
@@ -86,7 +85,7 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} --cb ${ND_minibam} -n ${case} -r ${ref_genome} -nd ${tumor_cutoff} -nt ${control_cutoff} -rl ${read_length} -e {max_errors} -gc ${gc_content} -q ${tum_qual} -c ${mincov} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20> ${case}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations
+samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -n ${case} -r ${ref_genome} -tt ${tumor_cutoff} -nt ${control_cutoff} -rl ${read_length} -e ${max_errors} -gc ${gc_content} -q ${tum_qual} -c ${mincov} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20> ${case}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations
 
 lines=$(wc -l ${case}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]
