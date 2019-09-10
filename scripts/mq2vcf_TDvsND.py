@@ -53,7 +53,7 @@ def parse_args():
 	'-tb', '--tumor_bam', type = str, required = True, metavar = 'FILE',
 	help = 'Tumor miniBAM to analyse')
 	parser.add_argument(
-	'-td', '--tumor_threshold', type = int, required = False, default = 4, metavar = 'INT',
+	'-tt', '--tumor_threshold', type = int, required = False, default = 4, metavar = 'INT',
 	help = 'Minimum number of mutated reads to consider a mutation in the tumor sample. (default: %(default)s)')
 	return parser.parse_args()
 
@@ -174,10 +174,10 @@ def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict):
 	variants = variantslist_correction(variants)
 	indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
 	for idx in indices:
-		start_dict[reads[idx]] = pos if reads[idx] not in startdic #Store the start of any read
-		end_dict[reads[idx]] = pos if reads[idx] #Store the end of any read (the value will be replaced over and over until the last base of the read)
+		start_dict[reads[idx]] = pos if reads[idx] not in startdic else start_dict[reads[idx]] #Store the start of any read
+		end_dict[reads[idx]] = pos #Store the end of any read (the value will be replaced over and over until the last base of the read)
 		variants_dict[reads[idx]] = [str(pos)+"_"+str(variants[idx])] if reads[idx] not in variants_dict else variants_dict[reads[idx]].append(str(pos)+"_"+str(variants[idx])) #Save the variants of each read in a dict
- 	return(start_dict, end_dict, variants_dict)
+	return(start_dict, end_dict, variants_dict)
 
 def context_extract(changes_dict, start_dict, end_dict):
 	read_max_errors = args.max_errors*args.read_length/100
@@ -187,7 +187,7 @@ def context_extract(changes_dict, start_dict, end_dict):
 	changes_set = set()
 	changes_list = list()
 
-	for each_list in changes_dict.values() # Merge all changes found in the reads into one set and create a list of all changes
+	for each_list in changes_dict.values(): # Merge all changes found in the reads into one set and create a list of all changes
 		changes_set = changes_set | set(each_list)
 		changes_list.extend(each_list)
 
@@ -198,7 +198,7 @@ def context_extract(changes_dict, start_dict, end_dict):
 		actual_change_frequency = changes_list.count(change)
 		if expected_change_frequency - actual_change_frequency == 0: #All reads contain the change, so it's part of the context
 			context.add(change)
-		elif actual_change_frequency == 1 and expected_change_frequency > 1 #Only appears once --> error. Not important
+		elif actual_change_frequency == 1 and expected_change_frequency > 1: #Only appears once --> error. Not important
 			errors += 1
 		elif expected_change_frequency - actual_change_frequency == 1: #One of them doesn't contain it. Probably an error but it belongs to the context
 			errors += 1
@@ -293,7 +293,7 @@ def main_function(line):
 					string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+ref+"\t"+alt
 					print_log(string, "germline_change")
 			else:
-				continue
+				pass
 
 			## Prepare the mutations to be printed
 			ref_list = list()
