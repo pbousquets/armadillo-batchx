@@ -22,8 +22,8 @@ fi
 ref_genome=${armadillo_data}'/armadillo_reference_genome.fa'
 blat_coords=${armadillo_data}'/rois_copies_coords'
 miniFasta_dir=${armadillo_data}'/miniFASTA'
-repeatmasker_candidates_filter='${scripts_dir}/repeatmasker_candidates_filter.py'
-mq2vcf_TDvsND='${scripts_dir}/mq2vcf_TDvsND.py'
+repeatmasker_candidates_filter=${scripts_dir}'/repeatmasker_candidates_filter.py'
+mq2vcf_TDvsND=${scripts_dir}'/mq2vcf_TDvsND.py'
 
 if [ "$print" = 'true' ]
 then
