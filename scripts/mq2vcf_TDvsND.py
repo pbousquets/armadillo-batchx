@@ -12,7 +12,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description = 'Converts an MQ file into a VCF filtering by coverage')
 	parser.add_argument(
 	'-c', '--normal_coverage', type = int, required = False, default = 80,
-	help = 'Minimal proportion (%) of normal coverage comparing to tumor coverage (default: %(default)s)')
+	help = 'Minimal proportion (%) of normal coverage in regard to tumor coverage (default: %(default)s)')
 	parser.add_argument(
 	'-cb', '--control_bam', type = str, required = True, metavar = 'FILE',
 	help = 'Tumor miniBAM to analyse')
@@ -41,7 +41,7 @@ def parse_args():
 	'-q', '--base_quality', type = int, required = False, default = 30,
 	help = 'Filter by base quality value (default: %(default)s)')
 	parser.add_argument(
-	'-r', '--reference_fasta', type = str, required = False, default = '/data/databases/hg19_repetitive_exons_fasta/REF.fa',
+	'-r', '--reference_fasta', type = str, required = True,
 	help = 'Reference fasta file (default: %(default)s)')
 	parser.add_argument(
 	'-rl', '--read_length', type = int, required = False, default = 151,
@@ -58,7 +58,7 @@ def parse_args():
 	return parser.parse_args()
 
 def print_log(line, reason):
-	f = open("discarded_elements.log", "a+")
+	f = open("discarded_variants.log", "a+")
 	f.write(line+"\t"+reason+"\n")
 	f.close()
 
@@ -83,18 +83,18 @@ def correct_variants_list(variants):
 			continue
 	return(variants, indel_list)
 
-def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, threshold_ND):
+def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, threshold_ND, coverage_td, coverage_Nd):
 	alts = list()
 	badalts = list()
 	for variant in single_variants_list:
 		count_TD = full_variants_list_TD.count(variant)
 		count_ND = full_variants_list_ND.count(variant)
-		realND_threshold = count_TD*threshold_ND/100 if count_TD*threshold_ND/100 >= 1 else 1 #In the control, we allow 10% of mut reads in tumor max. Min = 1
-		if countTD >= threshold_TD and count_ND <= realND_threshold:
+		realND_threshold = coverage_nd * count_TD/coverage_td * threshold_ND/100 if count_TD > 6 else 0 #count_TD/coverage_td is the AF for the tumor. If there's a contamination, the AF for the normal is tAF * %contamination.
+		if count_TD >= threshold_TD and count_ND <= realND_threshold:
 			alts.append(variant)
-		elif countTD >= threshold_TD and count_ND > realND_threshold: #Store a list of those that were discarded due to high freq in control
-			badalt.append(variant)
-	return(alts, badalt)
+		elif count_TD >= threshold_TD and count_ND > realND_threshold: #Store a list of those that were discarded due to high freq in control (likely SNPs)
+			badalts.append(variant)
+	return(alts, badalts)
 
 def get_mut_reads(ref, alt, variants, reads):
 	reads_ID_list = list()
@@ -285,7 +285,8 @@ def main_function(line):
 		if len(variants_list_td_set) == 0:
 			pass
 		else:
-			real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, normal_threshold)
+
+			real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.normal_threshold, coverage_td, coverage_nd)
 
 			## Annotate alts with frequency over threshold in control sample.
 			if args.full:
