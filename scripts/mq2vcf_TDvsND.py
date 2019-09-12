@@ -83,7 +83,7 @@ def correct_variants_list(variants):
 			continue
 	return(variants, indel_list)
 
-def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, threshold_ND, coverage_td, coverage_Nd):
+def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, threshold_ND, coverage_td, coverage_nd):
 	alts = list()
 	badalts = list()
 	for variant in single_variants_list:
@@ -145,7 +145,7 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
 	return (reads_left, nbadreads)
 
 def blat_search(fasta): # Blat search
-	blat_command = ['gfClient', '-out = pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
+	blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
 	result = check_output(blat_command, input = fasta.encode()).decode().strip().split("\n")
 	reads_left,nbadreads = blat_filter(result)
 	return (reads_left, nbadreads)
@@ -174,7 +174,7 @@ def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict):
 	variants = variantslist_correction(variants)
 	indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
 	for idx in indices:
-		start_dict[reads[idx]] = pos if reads[idx] not in startdic else start_dict[reads[idx]] #Store the start of any read
+		start_dict[reads[idx]] = pos if reads[idx] not in start_dict else start_dict[reads[idx]] #Store the start of any read
 		end_dict[reads[idx]] = pos #Store the end of any read (the value will be replaced over and over until the last base of the read)
 		variants_dict[reads[idx]] = [str(pos)+"_"+str(variants[idx])] if reads[idx] not in variants_dict else variants_dict[reads[idx]].append(str(pos)+"_"+str(variants[idx])) #Save the variants of each read in a dict
 	return(start_dict, end_dict, variants_dict)
@@ -225,12 +225,11 @@ def context_analysis(pileup, reads_left):
 	noise = list()
 	for newline in pileup: # READ THE PILEUP
 		column = newline.strip().split()
-		chrom, pos, ref, coverage, variants, reads, control_coverage, control_variants, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
-		noise.append(len(i for i, x in enumerate(variants) if x not in [",", "."])) #Record how many variants there are in this position
+		chrom, pos, ref, coverage, tumor_variants_list, reads, control_coverage, control_variants_list, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
+		noise.append(len([i for i, x in enumerate(variants) if x not in [",", "."]])) #Record how many variants there are in this position
 
-		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(variants, reads, pos, tumor_startdict, tumor_enddict, tumor_variants)
-		control_startdict, control_enddict, control_variants = variants_extract(control_variants, control_reads, pos, control_startdict, control_enddict, control_variants)
-		mutant
+		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants)
+		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants)
 
 	mutantreads_changes_dict = dict((read, tumor_variants[read]) for read in reads_left) #Save the mutant reads in other dictionary
 	final_reads, badreads, context = context_extract(mutantreads_changes_dict, startdict, enddict) # Extracts the mutant reads with the same context
