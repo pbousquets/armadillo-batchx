@@ -170,13 +170,20 @@ def variantslist_correction(variants_list):
 			continue
 	return variants
 
-def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict):
+def variants_extract(variants, reads, mut_pos, start_dict, end_dict, variants_dict):
 	variants = variantslist_correction(variants)
 	indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
+	mut_prefix = str(mut_pos)+"_"
 	for idx in indices:
-		start_dict[reads[idx]] = pos if reads[idx] not in start_dict else start_dict[reads[idx]] #Store the start of any read
-		end_dict[reads[idx]] = pos #Store the end of any read (the value will be replaced over and over until the last base of the read)
-		variants_dict[reads[idx]] = [str(pos)+"_"+str(variants[idx])] if reads[idx] not in variants_dict else variants_dict[reads[idx]].append(str(pos)+"_"+str(variants[idx])) #Save the variants of each read in a dict
+		if reads[idx].startswith(mutprefix):
+			continue
+		else:
+			start_dict[reads[idx]] = pos if reads[idx] not in start_dict else start_dict[reads[idx]] #Store the start of any read
+			end_dict[reads[idx]] = pos #Store the end of any read (the value will be replaced over and over until the last base of the read)
+			if reads[idx] not in variants_dict:
+				variants_dict[reads[idx]] = [str(pos)+"_"+str(variants[idx])]
+			else:
+				variants_dict[reads[idx]].append(str(pos)+"_"+str(variants[idx])) #Save the variants of each read in a dict
 	return(start_dict, end_dict, variants_dict)
 
 def context_extract(changes_dict, start_dict, end_dict):
@@ -193,8 +200,9 @@ def context_extract(changes_dict, start_dict, end_dict):
 
 	for change in changes_set:
 		change_pos = int(change.split("_")[0])
-		possible_reads = set([read for read, pos in start_dict.items() if pos >= change_pos]) & set([read for read, pos in end_dict.items() if pos <= change_pos]) #Phasable if the change is between start and end
-		expected_change_frequency = len(possible_reads)
+
+		possible_reads = set([read for read, start in start_dict.items() if int(start) <= change_pos]) & set([read for read, end in end_dict.items() if int(end) <= change_pos]) #Phasable if the change is between start and end
+		expected_change_frequency = len(possible_reads) #All reads that are can own the change should carry it.
 		actual_change_frequency = changes_list.count(change)
 		if expected_change_frequency - actual_change_frequency == 0: #All reads contain the change, so it's part of the context
 			context.add(change)
@@ -206,7 +214,7 @@ def context_extract(changes_dict, start_dict, end_dict):
 		else: #Sometimes it appears, sometimes it doesn't --> different origin.
 			different_context.add(change)
 
-	#May not all context variants appear in mutant reads just because of their start and end. Take it into account:
+	#Maybe not all context variants appear in mutant reads just because of their start and end. Take it into account:
 	reads_possible_context = {read:[variant for variant in context if int(variant.split("_")[0]) <= end_dict[read] and int(variant.split("_")[0]) >= start_dict[read]] for read in changes_dict.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account
 
 	##Define what reads are bad##
@@ -219,7 +227,7 @@ def context_extract(changes_dict, start_dict, end_dict):
 
 	return(final_reads, bad_reads, context)
 
-def context_analysis(pileup, reads_left):
+def context_analysis(pileup, reads_left, mut_pos):
 	tumor_variants, tumor_startdict, tumor_enddict = (dict() for i in range(3))
 	control_variants, control_startdict, control_enddict = (dict() for i in range(3))
 	noise = list()
@@ -228,11 +236,11 @@ def context_analysis(pileup, reads_left):
 		chrom, pos, ref, coverage, tumor_variants_list, reads, control_coverage, control_variants_list, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
 		noise.append(len([i for i, x in enumerate(variants) if x not in [",", "."]])) #Record how many variants there are in this position
 
-		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants)
-		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants)
+		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants, mut_pos)
+		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants, mut_pos)
 
-	mutantreads_changes_dict = dict((read, tumor_variants[read]) for read in reads_left) #Save the mutant reads in other dictionary
-	final_reads, badreads, context = context_extract(mutantreads_changes_dict, startdict, enddict) # Extracts the mutant reads with the same context
+	mutantreads_changes_dict = dict((read, tumor_variants[read]) for read in reads_left) #Save the mutant reads left in a dictionary
+	final_reads, badreads, context = context_extract(mutantreads_changes_dict, tumor_startdict, tumor_enddict) # Extracts the mutant reads with the same context
 
 	tumor_possible_context = {read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account
 	context_tumor_reads=len([read for read, read_changes in tumor_variants.items() if tumor_possible_context.issubset(set(read_changes))])
@@ -330,12 +338,12 @@ def main_function(line):
 						reads_left,nbadreads = blat_search(reads_fasta) #Launch blat to remove perfect reads
 						if len(reads_left) >= args.tumor_threshold: #If there are enough reads, go on
 							##Phase the variants to check if all the reads containing the mutation come from the same region
-							pileup_start = pos-args.read_length if pos >= args.read_length else 0 #Start can't be negative
+							pileup_start = pos-args.read_length if pos >= args.read_length else 1 #Start can't be negative
 							pileup_command = ["samtools", "mpileup", "--output-QNAME", "-q", "0", "-Q", str(args.base_quality), "-R", "-f",  args.reference_fasta, tbam, cbam, "-r", chrom+":"+str(pileup_start)+"-"+str(pos+args.read_length)]
 							pileup = check_output(pileup_command).decode().splitlines() #run samtools mpileup
 
-							final_reads, context, mean_noise, stdev_noise, tumor_context_matches, control_context_matches = context_analysis(pileup, reads_left) #Analyse the context of each variant
-							nbadreads += reads_left-len(final_reads) #nbadreads equals those discarded with blat plus the ones discarded with context analysis
+							final_reads, context, mean_noise, stdev_noise, tumor_context_matches, control_context_matches = context_analysis(pileup, reads_left, pos) #Analyse the context of each variant
+							nbadreads += reads_left - len(final_reads) #nbadreads equals those discarded with blat plus the ones discarded with context analysis
 
 							if control_context_matches < 2 or tumor_context_matches - len(final_reads) < 2: #Remove the mutation if the context only exists in the mutant reads
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
