@@ -170,7 +170,12 @@ def variantslist_correction(variants_list):
 			continue
 	return variants
 
+<<<<<<< HEAD
 def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict):
+=======
+def variants_extract(variants, reads, pos):
+	start_dict,	end_dict, variants_dict = (dict() for i in range(3))
+>>>>>>> 6fdcfb699b6ee3bf30afbf41c25e7a70881053db
 	variants = variantslist_correction(variants)
 	indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
 	for idx in indices:
@@ -220,6 +225,7 @@ def context_extract(changes_dict, start_dict, end_dict):
 	return(final_reads, bad_reads, context)
 
 def context_analysis(pileup, reads_left):
+<<<<<<< HEAD
 	tumor_variants, tumor_startdict, tumor_enddict = (dict() for i in range(3))
 	control_variants, control_startdict, control_enddict = (dict() for i in range(3))
 	noise = list()
@@ -230,6 +236,16 @@ def context_analysis(pileup, reads_left):
 
 		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants)
 		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants)
+=======
+	noise = list()
+	for newline in pileup: # READ THE PILEUP
+		column = newline.strip().split()
+		chrom, pos, ref, coverage, variants, reads, control_coverage, control_variants_list, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
+		noise.append(len([i for i, x in enumerate(variants) if x not in [",", "."]])) #Record how many variants there are in this position
+
+		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(variants, reads, pos)
+		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos)
+>>>>>>> 6fdcfb699b6ee3bf30afbf41c25e7a70881053db
 
 	mutantreads_changes_dict = dict((read, tumor_variants[read]) for read in reads_left) #Save the mutant reads in other dictionary
 	final_reads, badreads, context = context_extract(mutantreads_changes_dict, startdict, enddict) # Extracts the mutant reads with the same context
