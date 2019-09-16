@@ -249,7 +249,7 @@ def context_analysis(pileup, reads_left, mut_pos):
 	## FIND THEORETICAL NON-MUTANT READS WITH SAME CONTEXT ##
 	if len(context) == 0: #If there are no SNPs associated to the mutation:
 		context_tumor_reads = len({read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()})
-		context_control_reads = len(read:[variant for variant in context if int(variant.split("_")[0]) <= control_enddict[read] and int(variant.split("_")[0]) >= control_startdict[read]] for read in control_variants.keys())
+		context_control_reads = len({read:[variant for variant in context if int(variant.split("_")[0]) <= control_enddict[read] and int(variant.split("_")[0]) >= control_startdict[read]] for read in control_variants.keys()})
 	else:
 		tumor_ctxtpossible_reads = {read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account. variant.split("_")[0] is the change position
 		context_tumor_reads=len([read for read, read_changes in tumor_variants.items() if set(tumor_ctxtpossible_reads.keys()).issubset(set(read_changes))])
@@ -364,8 +364,9 @@ def main_function(line):
 							if len(final_reads) >= args.tumor_threshold:
 								nd_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
 								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, nd_mutcov,coverage_nd, context_control_reads, mean_noise, stdev_noise]
+								characteristics = list(map(str, characteristics))
 								print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(final_reads),"\n", sep = '\t', end = '')
-							elif args.full:
+							elif args.full and len(final_reads) < args.tumor_threshold::
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
 								print_log(string, "many_bad_reads")
 							else:
