@@ -366,7 +366,7 @@ def main_function(line):
 								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, nd_mutcov,coverage_nd, context_control_reads, mean_noise, stdev_noise]
 								characteristics = list(map(str, characteristics))
 								print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(final_reads),"\n", sep = '\t', end = '')
-							elif args.full and len(final_reads) < args.tumor_threshold::
+							elif args.full and len(final_reads) < args.tumor_threshold:
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
 								print_log(string, "many_bad_reads")
 							else:
