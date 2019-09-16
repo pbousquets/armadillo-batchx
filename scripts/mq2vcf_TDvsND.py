@@ -235,10 +235,10 @@ def context_analysis(pileup, reads_left, mut_pos):
 		column = newline.strip().split()
 		chrom, pos, ref, coverage, tumor_variants_list, reads, control_coverage, control_variants_list, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
 		noise.append(len([i for i, x in enumerate(tumor_variants_list) if x not in [",", "."]])) #Record how many variants there are in this position
-        if control_variants_list in ['*'] or tumor_variants_list in ['*']: #Ignore that position if there's no coverage
-                continue
-        else:
-                pass
+		if control_variants_list in ['*'] or tumor_variants_list in ['*']: #Ignore that position if there's no coverage
+			continue
+		else:
+			pass
 		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants, mut_pos)
 		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants, mut_pos)
 
