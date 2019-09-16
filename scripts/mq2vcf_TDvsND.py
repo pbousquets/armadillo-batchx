@@ -248,8 +248,8 @@ def context_analysis(pileup, reads_left, mut_pos):
 
 	## FIND THEORETICAL NON-MUTANT READS WITH SAME CONTEXT ##
 	if len(context) == 0: #If there are no SNPs associated to the mutation:
-		context_tumor_reads = len(reads)
-		context_control_reads = len(control_reads)
+		context_tumor_reads = len({read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()})
+		context_control_reads = len(read:[variant for variant in context if int(variant.split("_")[0]) <= control_enddict[read] and int(variant.split("_")[0]) >= control_startdict[read]] for read in control_variants.keys())
 	else:
 		tumor_ctxtpossible_reads = {read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account. variant.split("_")[0] is the change position
 		context_tumor_reads=len([read for read, read_changes in tumor_variants.items() if set(tumor_ctxtpossible_reads.keys()).issubset(set(read_changes))])
@@ -354,7 +354,7 @@ def main_function(line):
 							final_reads, context, mean_noise, stdev_noise, context_tumor_reads, context_control_reads = context_analysis(pileup, reads_left, pos) #Analyse the context of each variant
 							nbadreads += len(reads_left) - len(final_reads) #nbadreads equals those discarded with blat plus the ones discarded with context analysis
 
-							if context_control_reads < 2 or context_tumor_reads - len(final_reads) < 2: #Remove the mutation if the context only exists in the mutant reads
+							if args.full and (context_control_reads < 2 or context_tumor_reads - len(final_reads) < 2): #Remove the mutation if the context only exists in the mutant reads
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
 								print_log(string, "no_context_without_mut")
 								continue
