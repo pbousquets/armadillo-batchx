@@ -170,12 +170,12 @@ def variantslist_correction(variants_list):
 			continue
 	return variants
 
-def variants_extract(variants, reads, mut_pos, start_dict, end_dict, variants_dict):
+def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict, mut_pos):
 	variants = variantslist_correction(variants)
 	indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
 	mut_prefix = str(mut_pos)+"_"
 	for idx in indices:
-		if reads[idx].startswith(mutprefix):
+		if reads[idx].startswith(mut_prefix):
 			continue
 		else:
 			start_dict[reads[idx]] = pos if reads[idx] not in start_dict else start_dict[reads[idx]] #Store the start of any read
@@ -234,19 +234,28 @@ def context_analysis(pileup, reads_left, mut_pos):
 	for newline in pileup: # READ THE PILEUP
 		column = newline.strip().split()
 		chrom, pos, ref, coverage, tumor_variants_list, reads, control_coverage, control_variants_list, control_reads = column[0], column[1], column[2], column[3], column[4].upper(), column[6].split(','), column[7], column[8].upper(), column[10].split(',')
-		noise.append(len([i for i, x in enumerate(variants) if x not in [",", "."]])) #Record how many variants there are in this position
-
+		noise.append(len([i for i, x in enumerate(tumor_variants_list) if x not in [",", "."]])) #Record how many variants there are in this position
+        if control_variants_list in ['*'] or tumor_variants_list in ['*']: #Ignore that position if there's no coverage
+                continue
+        else:
+                pass
 		tumor_startdict, tumor_enddict, tumor_variants = variants_extract(tumor_variants_list, reads, pos, tumor_startdict, tumor_enddict, tumor_variants, mut_pos)
 		control_startdict, control_enddict, control_variants = variants_extract(control_variants_list, control_reads, pos, control_startdict, control_enddict, control_variants, mut_pos)
 
+	## GET THE CONTEXT ##
 	mutantreads_changes_dict = dict((read, tumor_variants[read]) for read in reads_left) #Save the mutant reads left in a dictionary
 	final_reads, badreads, context = context_extract(mutantreads_changes_dict, tumor_startdict, tumor_enddict) # Extracts the mutant reads with the same context
 
-	tumor_possible_context = {read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account
-	context_tumor_reads=len([read for read, read_changes in tumor_variants.items() if tumor_possible_context.issubset(set(read_changes))])
+	## FIND THEORETICAL NON-MUTANT READS WITH SAME CONTEXT ##
+	if len(context) == 0: #If there are no SNPs associated to the mutation:
+		context_tumor_reads = len(reads)
+		context_control_reads = len(control_reads)
+	else:
+		tumor_ctxtpossible_reads = {read:[variant for variant in context if int(variant.split("_")[0]) <= tumor_enddict[read] and int(variant.split("_")[0]) >= tumor_startdict[read]] for read in tumor_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account. variant.split("_")[0] is the change position
+		context_tumor_reads=len([read for read, read_changes in tumor_variants.items() if set(tumor_ctxtpossible_reads.keys()).issubset(set(read_changes))])
 
-	control_possible_context = {read:[variant for variant in context if int(variant.split("_")[0]) <= control_enddict[read] and int(variant.split("_")[0]) >= control_startdict[read]] for read in control_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account
-	context_control_reads=len([read for read, read_changes in control_variants.items() if control_possible_context.issubset(set(read_changes))])
+		control_ctxtpossible_reads = {read:[variant for variant in context if int(variant.split("_")[0]) <= control_enddict[read] and int(variant.split("_")[0]) >= control_startdict[read]] for read in control_variants.keys()} #The reads may not contain all context variants because of the start and end positions, so we take it into account
+		context_control_reads=len([read for read, read_changes in control_variants.items() if set(control_ctxtpossible_reads.keys()).issubset(set(read_changes))])
 
 	stdev_noise = statistics.stdev(noise)
 	mean_noise = statistics.mean(noise)
@@ -342,10 +351,10 @@ def main_function(line):
 							pileup_command = ["samtools", "mpileup", "--output-QNAME", "-q", "0", "-Q", str(args.base_quality), "-R", "-f",  args.reference_fasta, tbam, cbam, "-r", chrom+":"+str(pileup_start)+"-"+str(pos+args.read_length)]
 							pileup = check_output(pileup_command).decode().splitlines() #run samtools mpileup
 
-							final_reads, context, mean_noise, stdev_noise, tumor_context_matches, control_context_matches = context_analysis(pileup, reads_left, pos) #Analyse the context of each variant
-							nbadreads += reads_left - len(final_reads) #nbadreads equals those discarded with blat plus the ones discarded with context analysis
+							final_reads, context, mean_noise, stdev_noise, context_tumor_reads, context_control_reads = context_analysis(pileup, reads_left, pos) #Analyse the context of each variant
+							nbadreads += len(reads_left) - len(final_reads) #nbadreads equals those discarded with blat plus the ones discarded with context analysis
 
-							if control_context_matches < 2 or tumor_context_matches - len(final_reads) < 2: #Remove the mutation if the context only exists in the mutant reads
+							if context_control_reads < 2 or context_tumor_reads - len(final_reads) < 2: #Remove the mutation if the context only exists in the mutant reads
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
 								print_log(string, "no_context_without_mut")
 								continue
@@ -354,7 +363,7 @@ def main_function(line):
 
 							if len(final_reads) >= args.tumor_threshold:
 								nd_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
-								characteristics = [len(final_reads), coverage_td, nbadreads, tumor_context_matches, nd_mutcov,coverage_nd, control_context_matches, mean_noise, stdev_noise]
+								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, nd_mutcov,coverage_nd, context_control_reads, mean_noise, stdev_noise]
 								print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(final_reads),"\n", sep = '\t', end = '')
 							elif args.full:
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
