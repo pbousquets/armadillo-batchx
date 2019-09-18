@@ -19,7 +19,7 @@ def parse_args():
         help = 'Port where gfServer was loaded (BLAT)')
         parser.add_argument(
         '-o', '--output', type = str, required = True, metavar = '', default = 'armadillo',
-        help = 'Set name. It will be used for output dir. (default: %(default)s)')
+        help = 'Set name. It will be used for output dir. (default: %(default)s)') 
         return parser.parse_args()
 
 def blat_parser(blat, filename):
