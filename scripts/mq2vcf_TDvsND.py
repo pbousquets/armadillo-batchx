@@ -32,8 +32,11 @@ def parse_args():
 	'-n', '--name', type = str, required = False, default = '.',
 	help = 'Value for the ID field. (default: %(default)s)')
 	parser.add_argument(
-	'-nt', '--normal_threshold', type = int, required = False, default = 10, metavar = 'INT',
+	'-nt', '--normal_contamination', type = int, required = False, default = 15, metavar = 'INT',
 	help = 'Contamination %% in normal sample. (default: %(default)s)')
+	parser.add_argument(
+	'-nm', '--normal_max', type = int, required = False, default = 3, metavar = 'INT',
+	help = 'Maximum mutant reads allowed in the control. (default: %(default)s)')
 	parser.add_argument(
 	'-p', '--port', type = str, required = False, default = '9001',
 	help = 'Port for performing blat analysis (default: %(default)s)')
@@ -42,7 +45,7 @@ def parse_args():
 	help = 'Filter by base quality value (default: %(default)s)')
 	parser.add_argument(
 	'-r', '--reference_fasta', type = str, required = True,
-	help = 'Reference fasta file (default: %(default)s)')
+	help = 'Reference fasta file')
 	parser.add_argument(
 	'-rl', '--read_length', type = int, required = False, default = 151,
 	help = 'Average read length (default: %(default)s)')
@@ -83,14 +86,13 @@ def correct_variants_list(variants):
 			continue
 	return(variants, indel_list)
 
-def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, threshold_ND, coverage_td, coverage_nd):
+def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, normal_max, coverage_td, coverage_nd):
 	alts = list()
 	badalts = list()
 	for variant in single_variants_list:
 		count_TD = full_variants_list_TD.count(variant)
 		count_ND = full_variants_list_ND.count(variant)
-		realND_threshold = coverage_nd * count_TD/coverage_td * threshold_ND/100 if count_TD > 6 else 0 #count_TD/coverage_td is the AF for the tumor. If there's a contamination, the AF for the normal is tAF * %contamination.
-		if count_TD >= threshold_TD and count_ND <= realND_threshold:
+		if count_TD >= threshold_TD and count_ND <= args.normal_max : #We don't allow more than 3 reads in a mutation
 			alts.append(variant)
 		elif count_TD >= threshold_TD and count_ND > realND_threshold: #Store a list of those that were discarded due to high freq in control (likely SNPs)
 			badalts.append(variant)
@@ -188,6 +190,7 @@ def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict, 
 
 def context_extract(changes_dict, start_dict, end_dict):
 	read_max_errors = args.max_errors*args.read_length/100
+	read_max_errors = int(read_max_errors) + 1 if read_max_errors % 1 != 0 else read_max_errors #Round it up
 	errors = 0
 	context = set()
 	different_context = set()
@@ -302,7 +305,7 @@ def main_function(line):
 			pass
 		else:
 
-			real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.normal_threshold, coverage_td, coverage_nd)
+			real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.normal_max, coverage_td, coverage_nd)
 
 			## Annotate alts with frequency over threshold in control sample.
 			if args.full:
@@ -361,9 +364,18 @@ def main_function(line):
 							else:
 								pass
 
+							corrected_control_reads_threshold = context_control_reads * len(final_reads)/context_tumor_reads * args.normal_threshold/100 #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF
+							control_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
+							if corrected_control_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
+								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+ 								print_log(string, "too_many_mutreads_in_control("+str(control_mutcov)+")")
+							elif corrected_control_threshold >= control_mutcov:
+								pass #Go on, the mutation is good.
+							else:
+								continue # Too many mutant reads in the control, but don't print it because args.full is FALSE
+
 							if len(final_reads) >= args.tumor_threshold:
-								nd_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
-								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, nd_mutcov,coverage_nd, context_control_reads, mean_noise, stdev_noise]
+								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, control_mutcov, coverage_nd, context_control_reads, mean_noise, stdev_noise]
 								characteristics = list(map(str, characteristics))
 								print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(final_reads),"\n", sep = '\t', end = '')
 							elif args.full and len(final_reads) < args.tumor_threshold:

@@ -27,8 +27,9 @@ usage(){ #Create a function to display the help message
     \t -R,  --ref_genome \t Repeats reference genome
     \t -s,  --scriptsDir \t Directory where this pipeline's scripts are stored \n
     Cutoff options and parameters:
-    \t -c,  --control_cov \t Minimum proportional coverage with regard to the tumor sample [80%]
-    \t -cc, --control_cutoff \t Maximum coverage allowed for a variant in the control. Warning: for blood samples, a 0 cutoff may lead to loss of candidates [3]
+    \t -c,  --control_cov \t Minimum coverage with regard to the tumor sample [80%]
+    \t -cc, --control_cutoff \t Maximum coverage allowed for a variant in the control. Warning: specially in blood samples, cutoff equal to 0 may lead to big loss of candidates [3]
+    \t -ct, --control_contamination \t % tumor cellularity in the control sample [15]
     \t -tc, --tumor_cutoff \t Minimum coverage required for a variant to believe it's a good candidate  [6]
     \t -q,  --tum_qual \t Minimum base quality required to the tumour genome  [30]
     \t -Q,  --control_qual \t Minimum base quality required to the control genome [0]
@@ -91,6 +92,9 @@ parse_arguments(){
 				;;
 			-cc | --control_cutoff)
 				control_cutoff=$VALUE
+				;;
+               -ct | --control_contamination)
+				control_contamination=$VALUE
 				;;
 			-tc | --tumor_cutoff)
 				tumor_cutoff=$VALUE
