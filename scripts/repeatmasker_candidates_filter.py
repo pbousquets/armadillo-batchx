@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-#This file reads finalres. For each exon, it searches its coordinate (and its similar ones) in our repeatmaskerDB.
-#A new column is added to finalres. If there are no repeats, a "-" is added, else the rep family is annotated.
-#Usage: cat unaan_candidates.vcf | grep -v ^#| python3 ${repeatmasker} ${repeatsDB}
 from sys import argv, stdin
 import tabix
 repeatsDB=tabix.open(argv[1])
