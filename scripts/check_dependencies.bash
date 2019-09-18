@@ -19,8 +19,8 @@ do
 done
 
 echo Checking python dependencies...
-for module in argparse gzip multiprocessing os pyfaidx re sys statistics subprocess
-do 
+for module in argparse gzip multiprocessing os pyfaidx re sys statistics subprocess tabix
+do
 	echo -ne "\t - ${module}... "
 	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader('"'$module'"') else 0)') -eq 1 ]] && echo -e OK || pip3 install ${module}
 done
