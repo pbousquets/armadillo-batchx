@@ -375,7 +375,7 @@ def main_function(line):
 								continue # Too many mutant reads in the control, but don't print it because args.full is FALSE
 
 							if len(final_reads) >= args.tumor_threshold:
-								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, control_mutcov, coverage_nd, context_control_reads, mean_noise, stdev_noise]
+								characteristics = [len(final_reads), coverage_td, nbadreads, context_tumor_reads, control_mutcov, coverage_nd, context_control_reads, int(mean_noise), int(stdev_noise)]
 								characteristics = list(map(str, characteristics))
 								print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(final_reads),"\n", sep = '\t', end = '')
 							elif args.full and len(final_reads) < args.tumor_threshold:
