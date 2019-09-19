@@ -51,7 +51,7 @@ for line in stdin:
 		pass
 	else:
 		if len(line.split()) == 7:
-			readslist, dic, charact_dic = annotate(readslist, dic, line)
+			readslist, dic, charact_dic = annotate(readslist, dic, line, "\t".join(line.split()[0:7]))
 		elif len(line.split()) == 14:  #For some reason, sometimes the previous script writes two mutations in the same line. If it happens, just split it.
 			readslist, dic, charact_dic = annotate(readslist, dic, charact_dic, "\t".join(line.split()[0:7]))
 			readslist, dic, charact_dic = annotate(readslist, dic, charact_dic, "\t".join(line.split()[7:]))
