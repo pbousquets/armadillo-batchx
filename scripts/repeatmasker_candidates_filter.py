@@ -6,6 +6,12 @@ import tabix
 repeatsDB=tabix.open(argv[1])
 TDcutoff=int(argv[2])
 flank_length=int(argv[3])
+
+if len(argv)==5: #If -f option (i.e., option print is TRUE)
+	prnt = True
+else:
+	prnt = False
+
 #print header
 header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'REPEATS', "READS"]
 print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.join(header), sep='\n', end='\n')
@@ -19,7 +25,7 @@ def annotate(readslist, dic, line):
 		start=int(chrom_TD.split(":")[1].split("-")[0])
 		end=int(chrom_TD.split(":")[1].split("-")[1])
 		length=end-start
-		if flank_length< int(pos_TD) < length - flank_length: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
+		if flank_length < int(pos_TD) < length - flank_length: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
 				reads=read_name.split(",")
 				bad=0
 				key=chrom_TD+"_"+pos_TD+"_"+ID+"_"+REF_TD+"_"+ALT_TD #We need a uniq key for each mutation
@@ -40,11 +46,11 @@ def annotate(readslist, dic, line):
 								except tabix.TabixError:
 										pass
 						else:
-								if len(argv)==5:
+								if prnt:
 										f=open("duplicates.vcf", "a+")
 										f.write(line+"\n")
 		else:
-				if len(argv)==5:
+				if prnt:
 						f=open("duplicates.vcf", "a+")
 						f.write(line.split()+"\n")
 		return(readslist, dic)
@@ -54,9 +60,9 @@ for line in stdin:
 		if line.startswith("#"):
 				pass
 		else:
-				if len(line.split())==6:
+				if len(line.split())==7:
 						readslist, dic=annotate(readslist, dic, line)
-				elif len(line.split())==12:
+				elif len(line.split())==14:
 						readslist, dic=annotate(readslist, dic, "\t".join(line.split()[0:7]))
 						readslist, dic=annotate(readslist, dic, "\t".join(line.split()[7:]))
 for i in dic:
