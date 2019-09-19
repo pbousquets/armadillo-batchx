@@ -391,7 +391,7 @@ def main_function(line):
 	elif args.full:
 		string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+"*"+"\t"+"*"
 		cov_ND = 100*coverage_nd/coverage_td
-		print_log(string, "low_control_coverage("+str(cov_ND)+"%)")
+		print_log(string, "low_control_coverage("+str(int(cov_ND))+"%)")
 	else:
 		pass
 
