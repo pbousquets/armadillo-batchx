@@ -364,7 +364,7 @@ def main_function(line):
 							else:
 								pass
 
-							corrected_control_reads_threshold = context_control_reads * len(final_reads)/context_tumor_reads * args.normal_threshold/100 #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF
+							corrected_control_reads_threshold = context_control_reads * len(final_reads)/context_tumor_reads * args.normal_contamination/100 #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF
 							control_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
 							if corrected_control_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
