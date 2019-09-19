@@ -4,45 +4,44 @@
 from sys import argv, stdin
 import tabix
 repeatsDB=tabix.open(argv[1])
-TDcutoff=int(argv[2])
+TDcutoff=int(argv[2]) #Max duplicates allowed
 flank_length=int(argv[3])
+
+readslist=[]
+dic={}
+charact_dic={}
 
 if len(argv)==5: #If -f option (i.e., option print is TRUE)
 	prnt = True
 else:
 	prnt = False
 
-#print header
-header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'REPEATS', "READS"]
-print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.join(header), sep='\n', end='\n')
-
-readslist=[]
-dic={}
-
 def annotate(readslist, dic, line):
-		##REMOVE DUPLICATES
-		chrom_TD, pos_TD, ID, REF_TD, ALT_TD, read_name = line.strip().split()
+		##REMOVE DUPLICATES FIRST
+		chrom_TD, pos_TD, ID, REF_TD, ALT_TD, characteristics, read_name = line.strip().split()
 		start=int(chrom_TD.split(":")[1].split("-")[0])
 		end=int(chrom_TD.split(":")[1].split("-")[1])
 		length=end-start
+		bad=list()
+
 		if flank_length < int(pos_TD) < length - flank_length: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
 				reads=read_name.split(",")
-				bad=0
-				key=chrom_TD+"_"+pos_TD+"_"+ID+"_"+REF_TD+"_"+ALT_TD #We need a uniq key for each mutation
+				key=chrom_TD+"_"+pos_TD+"_"+ID+"_"+REF_TD+"_"+ALT_TD #We need a unique key for each mutation
 				pos=int(chrom_TD.split(":")[1].split("-")[0])+ int(pos_TD)
 				if key not in dic and read_name not in readslist: #Make a key for each mutation
-						for element in reads:
-								if element not in readslist:
-										readslist.append(element) #By using that list, we avoid repetition of the same mutation (as a uniq mutation may appear several times as they should appear in all repetitive exons)
+						for result in reads:
+								if result not in readslist:
+										readslist.append(result) #By using that list, we avoid duplicates of the same mutation (a unique mutation may appear several times as they may appear in any repeat of its real region)
 								else:
-										bad += 1
-						if bad < TDcutoff:
-								dic[key]=[read_name,set()]
+										bad.append(result)
+						if len(bad)/len(reads)* 100 <= TDcutoff:
+								dic[key]=[",".join(readslist),list()]
+								charact_dic[key]=characteristics
 								##ANNOTATE REPEATS
 								try:
 										query=repeatsDB.querys(chrom_TD) #Do the query of the mut region
 										for element in query:
-												dic[key][1].add(element[3])
+												dic[key][1]=(element[3])
 								except tabix.TabixError:
 										pass
 						else:
@@ -53,7 +52,11 @@ def annotate(readslist, dic, line):
 				if prnt:
 						f=open("duplicates.vcf", "a+")
 						f.write(line.split()+"\n")
-		return(readslist, dic)
+		return(readslist, dic, charact_dic)
+
+#print header
+header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'REPEATS', "READS"]
+print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.join(header), sep='\n', end='\n')
 
 for line in stdin:
 		line=line.strip()
@@ -61,13 +64,13 @@ for line in stdin:
 				pass
 		else:
 				if len(line.split())==7:
-						readslist, dic=annotate(readslist, dic, line)
+						readslist, dic, charact_dic=annotate(readslist, dic, line)
 				elif len(line.split())==14:
-						readslist, dic=annotate(readslist, dic, "\t".join(line.split()[0:7]))
-						readslist, dic=annotate(readslist, dic, "\t".join(line.split()[7:]))
-for i in dic:
-		if len(dic[i][1])==0:
-				dic[i][1]="-"
+						readslist, dic, charact_dic=annotate(readslist, dic, "\t".join(line.split()[0:7]))
+						readslist, dic, charact_dic=annotate(readslist, dic, "\t".join(line.split()[7:]))
+for key in dic:
+		if len(dic[key][1])==0:
+				dic[key][1]="-"
 		else:
 				pass
-		print("\t".join(i.split("_")), ",".join(dic[i][1]), dic[i][0], sep="\t") #Print the dictionary
+		print("\t".join(key.split("_")), charact_dic[key], dic[key][1], dic[key][0], sep="\t") #Print the dictionary
