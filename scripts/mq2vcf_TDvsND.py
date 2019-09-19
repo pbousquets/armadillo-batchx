@@ -368,7 +368,8 @@ def main_function(line):
 							control_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
 							if corrected_control_reads_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
-								print_log(string, "germline_change("+str(control_mutcov)+")")
+								print_log(string, "germline_change("+str(control_mutcov)+"reads)")
+								continue
 							elif corrected_control_reads_threshold >= control_mutcov:
 								pass #Go on, the mutation is good.
 							else:
