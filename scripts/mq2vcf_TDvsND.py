@@ -366,10 +366,10 @@ def main_function(line):
 
 							corrected_control_reads_threshold = context_control_reads * len(final_reads)/context_tumor_reads * args.normal_contamination/100 #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF
 							control_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
-							if corrected_control_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
+							if corrected_control_reads_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
 								print_log(string, "too_many_mutreads_in_control("+str(control_mutcov)+")")
-							elif corrected_control_threshold >= control_mutcov:
+							elif corrected_control_reads_threshold >= control_mutcov:
 								pass #Go on, the mutation is good.
 							else:
 								continue # Too many mutant reads in the control, but don't print it because args.full is FALSE
