@@ -17,7 +17,7 @@ def parse_args():
 	'-cb', '--control_bam', type = str, required = True, metavar = 'FILE',
 	help = 'Tumor miniBAM to analyse')
 	parser.add_argument(
-	'-f', '--full', action = 'store_true',
+	'-f', '--full', action = 'store_true', default = True,
 	help = 'Print all variants to follow how each is filtered in each step. No arguments required. (default: NULL)')
 	parser.add_argument(
 	'-e', '--max_errors', type = int, required = False, default = 2, metavar = 'INT',
