@@ -58,7 +58,7 @@ evaluate $ref_genome Reference genome
 evaluate $repeatsDB repeatsDB
 
 ##Run pipeline
-echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  List of ROIs: $rois_list   \n  Blat coordinates directory: $blat_coords   \n  miniFasta directory: $miniFasta_dir   \n  RepeatsDB: $repeatsDB   \n  Reference genome: $ref_genome   \n  Scripts directory: $scripts_dir   \n  Min. coverage: $mincov   \n  Control max. mut reads: $control_cutoff   \n  Control contamination (%): $control_contamination   \n  Tumor cutoff: $tumor_cutoff   \n  Control quality: $control_qual   \n  Tumor quality: $tum_qual   \n  Mapping quality cutoff: $mapq   \n  Read length: $read_length   \n  Max errors: $max_errors   \n  GC content cutoff: $gc_content   \n  Threads: $threads   \n  Print: $print   \n  Skip: $skip   \n  Port: $port \n" | tee -a pipeline.log
+echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  List of ROIs: $rois_list   \n  Blat coordinates directory: $blat_coords   \n  miniFasta directory: $miniFasta_dir   \n  RepeatsDB: $repeatsDB   \n  Reference genome: $ref_genome   \n  Scripts directory: $scripts_dir   \n  Min. coverage: $mincov   \n  Control max. mut reads: $control_cutoff   \n  Sequencing error rate: $seq_error   \n  Control contamination (%): $control_contamination    \n  Tumor cutoff: $tumor_cutoff   \n  Control quality: $control_qual   \n  Base quality: $tum_qual   \n  Mapping quality cutoff: $mapq   \n  Read length: $read_length   \n  Max errors: $max_errors   \n  GC content cutoff: $gc_content   \n  Threads: $threads   \n  Print: $print   \n  Skip: $skip   \n  Port: $port \n" | tee -a pipeline.log
 
 if [ ${skip} = 'false' ]
 then
@@ -85,7 +85,7 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -n ${case} -r ${ref_genome} -tt ${tumor_cutoff} -nt ${control_contamination} -nm ${control_cutoff} -rl ${read_length} -e ${max_errors} -gc ${gc_content} -q ${tum_qual} -c ${mincov} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 ${printopt}  > ${case}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
+samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -n ${case} -r ${ref_genome} -tt ${tumor_cutoff} -nt ${control_contamination} -se ${seq_error} -nm ${control_cutoff} -rl ${read_length} -e ${max_errors} -gc ${gc_content} -q ${tum_qual} -c ${mincov} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 ${printopt}  > ${case}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
 
 lines=$(wc -l ${case}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]

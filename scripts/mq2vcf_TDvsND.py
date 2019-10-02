@@ -23,6 +23,9 @@ def parse_args():
 	'-e', '--max_errors', type = int, required = False, default = 2, metavar = 'INT',
 	help = 'Maximum context errors allowed in regard to read length(%%). (default: %(default)s %%)')
 	parser.add_argument(
+	'-se', '--sequencing_error', type = float, required = False, default = 0.0003, metavar = 'FLOAT',
+	help = 'Sequencing error rate (default: %(default)s)')
+	parser.add_argument(
 	'-i', '--input', type = str, required = False, default = '-', metavar = 'FILE',
 	help = 'MQ file to convert')
 	parser.add_argument(
@@ -94,7 +97,7 @@ def most_common_variant(single_variants_list, full_variants_list_TD, full_varian
 		count_ND = full_variants_list_ND.count(variant)
 		if count_TD >= threshold_TD and count_ND <= args.normal_max : #We don't allow more than 3 reads in a mutation
 			alts.append(variant)
-		elif count_TD >= threshold_TD and count_ND > realND_threshold: #Store a list of those that were discarded due to high freq in control (likely SNPs)
+		elif count_TD >= threshold_TD and count_ND > args.normal_max: #Store a list of those that were discarded due to high freq in control (likely SNPs)
 			badalts.append(variant)
 	return(alts, badalts)
 
@@ -363,12 +366,11 @@ def main_function(line):
 								continue
 							else:
 								pass
-
-							corrected_control_reads_threshold = context_control_reads * len(final_reads)/context_tumor_reads * args.normal_contamination/100 #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF
+							corrected_control_reads_threshold = args.normal_max + context_control_reads * len(final_reads)/context_tumor_reads * args.normal_contamination/100 + args.sequencing_error * context_tumor_reads #Use context reads as total coverage (it's more close to the real coverage than using the raw depth) to compute the MAF and also take into account the error rate.
 							control_mutcov = variants_list_nd.count(element[1]) #Count frequency of mut in the control
 							if corrected_control_reads_threshold < control_mutcov and args.full: #Check if the mut coverage is over the threshold
 								string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
-								print_log(string, "germline_change("+str(control_mutcov)+"reads)")
+								print_log(string, "germline_change("+str(control_mutcov)+"reads/"+str(int(corrected_control_reads_threshold))+"max)")
 								continue
 							elif corrected_control_reads_threshold >= control_mutcov:
 								pass #Go on, the mutation is good.

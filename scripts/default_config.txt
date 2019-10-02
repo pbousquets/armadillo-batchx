@@ -1,5 +1,5 @@
 ### CONFIGURATION FILE ###
-##LOAD MAIN VARIABLES##
+
 # DATA #
 installation_path=''
 case='' ## ID ##
@@ -11,17 +11,18 @@ armadillo_data="${installation_path}'lib/armadillo_data/" ##Output dir of prepar
 repeatsDB=${installation_path}/'lib/hg19_repeatmasker_DB_sorted.bed.gz' ## Repeat annotation database ##
 
 # THRESHOLDS AND PARAMETERS #
-tum_qual=30
-gc_content=80 ## Max. %GC allowed in reads ##
-max_errors=2
-mincov=80
-control_cutoff=3
-control_contamination=15 ##(%)
-read_length=151
-threads=3
-tumor_cutoff=4
-control_qual=0
 mapq=40 ## Minimum mapq after realignment ##
+tumor_cutoff=4 ## Minimum reads in a variant ##
+tum_qual=30 ## Minimum base quality ##
+control_cutoff=3 ## Max. variant reads allowed in the control. If two high, SNPs may appear. ##
+control_qual=0 ## Base quality to consider control variants. The lower it is, the more restrictive later ##
+mincov=80 ## Minimum coverage in control in regard to tumor (%). If too low, untrustful variants may appear. ##
+control_contamination=5 ## Tumor reads expected in the control genome (%) ##
+gc_content=80 ## Max. %GC allowed in reads ##
+max_errors=2 ## Max. errors allowed in context analysis ##
+seq_error=0.00035 ## Sequencing error out of 1 ##
+read_length=151 ## Read length (bp) ##
+threads=3 ## Threads ##
 port='9001' ## Port previously opened for gfClient (Blat) ##
-skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters.
+skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters. ##
 print='TRUE' ## Print a log file of the candidates lost during the analysis ##
