@@ -63,8 +63,9 @@ Options can be also passed directly through the command line:
 ./armadillo run -i ID -C control.bam -T tumor.bam [options]
 ```
 __Important consideration before running armadillo:__
+
 When analysing the ROIs during the "data-prep" step, the gfServer must used a port with the **same reference genome** used to align the genomes that will be provided later to armadillo. However, when using "armadillo run", gfServer is used just to check if the read aligns perfectly anywhere in the genome so we can discard these reads. Thus, **we can use the latest reference genome** in that step, even though the alignment was performed on a previous version, as it's more complete. It will allow us remove more false positives associated to regions that actually don't exist in the reference genome used to align the genomes.
- 
+
 ## Built with:
 
 * [BWA](http://bio-bwa.sourceforge.net/) - Genome aligner
