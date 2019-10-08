@@ -11,39 +11,40 @@ Pablo Bousquets - XA Lab
 }
 usage(){ #Create a function to display the help message
     echo "
-    To run the program, two genomes (case and control) are required. Please, name them as shown below.
+    ### ARMADILLO ###
+    To run armadillo, two genomes (case and control) are required.
     Also, remind this program was writen for hg19 aligned genomes, so the coordinates provided by default files belong to hg19 genome. \n
-    Usage: armadillo run -i case -C control.bam -T tumor.bam [options] \n
+    Usage: armadillo run -i ID -C control.bam -T tumor.bam [options] || or || armadillo run configuration_file.txt \n
     Input options:
-    \t -i,  --input \t \t Case or sample name to analyze
-    \t -b,  --bamDir \t \t Root directory where the genomes are stored
-    \t -C,  --control_genome \t Control sample genome
-    \t -T,  --tumor_genome \t Tumour sample genome
-    \t -l,  --list \t \t List of ROIs to analyze  \n
+    \t -i,  --input \t \t \t Case or sample name to analyze
+    \t -b,  --bamDir \t \t \t Root directory where the genomes are stored
+    \t -C,  --control_genome \t \t Control sample genome
+    \t -T,  --tumor_genome \t \t Tumour sample genome
+    \t -l,  --list \t \t \t List of ROIs to analyze  \n
     Databases options:
-    \t -B,  --blat_coords \t Directory where the blat coords of each ROI are stored
-    \t -f,  --miniFasta \t Directory where the fasta of each exon is stored
-    \t -r,  --repeatsDB \t Database of genome repeats
-    \t -R,  --ref_genome \t Repeats reference genome
-    \t -s,  --scriptsDir \t Directory where this pipeline's scripts are stored \n
+    \t -B,  --blat_coords \t \t Directory where the blat coords of each ROI are stored
+    \t -f,  --miniFasta \t \t Directory where the fasta of each exon is stored
+    \t -r,  --repeatsDB \t \t Database of genome repeats
+    \t -R,  --ref_genome \t \t Repeats reference genome
+    \t -s,  --scriptsDir \t \t Directory where this pipeline's scripts are stored \n
     Cutoff options and parameters:
-    \t -c,  --control_cov \t Minimum coverage with regard to the tumor sample [80%]
-    \t -cc, --control_cutoff \t Maximum coverage allowed for a variant in the control. Warning: specially in blood samples, cutoff equal to 0 may lead to big loss of candidates [3]
+    \t -c,  --control_cov \t \t Minimum coverage with regard to the tumor sample [80%]
+    \t -cc, --control_cutoff \t \t Maximum variant coverage allowed in the control. [3]
     \t -ct, --control_contamination \t % tumor cellularity in the control sample [15]
-    \t -tc, --tumor_cutoff \t Minimum coverage required for a variant to believe it's a good candidate  [6]
-    \t -q,  --tum_qual \t Minimum base quality required to the tumour genome  [30]
-    \t -Q,  --control_qual \t Minimum base quality required to the control genome [0]
-    \t -m,  --map_qual \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
-    \t -se, --seq_error \t Estimation of sequencing error rate [0.00035]
-    \t -e,  --max_errors \t Maximum sequencing errors in reads [2%]
-    \t -rl, --read_length \t Reads length [150 bp]
-    \t -g,  --gc_content \t Maximum GC% allowed in the reads  [80] \n
+    \t -tc, --tumor_cutoff \t \t Minimum coverage required for a variant to believe it's a good candidate  [6]
+    \t -q,  --tum_qual \t \t Minimum base quality required to the tumour genome  [30]
+    \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
+    \t -m,  --map_qual \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
+    \t -se, --seq_error \t \t Estimation of sequencing error rate [0.00035]
+    \t -e,  --max_errors \t \t Maximum sequencing errors in reads [2%]
+    \t -rl, --read_length \t \t Reads length [150 bp]
+    \t -g,  --gc_content \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
-    \t -t,  --threads \t Threads running in parallel (only applies if parallelize mode on) [3]
-    \t -S,  --skip \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
-    \t -p,  --port \t \t Port used to perform blat analysis [9001]
-    \t -P,  --print \t \t Print the variants lost step by step [FALSE]
-    \t -h,  --help \t \t Display help message
+    \t -t,  --threads \t \t Threads running in parallel (only applies if parallelize mode on) [3]
+    \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
+    \t -p,  --port \t \t \t Port used to perform blat analysis [9001]
+    \t -P,  --print \t \t \t Print the variants lost step by step [FALSE]
+    \t -h,  --help \t \t \t Display help message
 "
 }
 
