@@ -9,7 +9,7 @@ from subprocess import check_output
 def parse_args():
         parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest in BED format.')
         parser.add_argument(
-        '-g', '--genome_ref', type = str, required = True, metavar = 'reference_genome.fa',
+        '-g', '--genome_ref', type = str, required = True, metavar = 'FASTA',
         help = 'Reference genome')
         parser.add_argument(
         '-i', '--rois', type = str, required = True, metavar = 'LIST',
