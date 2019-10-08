@@ -7,18 +7,18 @@ from pyfaidx import Fasta
 from subprocess import check_output
 
 def parse_args():
-        parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest.')
+        parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest in BED format.')
         parser.add_argument(
-        '-g', '--genome_ref', type = str, required = True, metavar = '',
+        '-g', '--genome_ref', type = str, required = True, metavar = 'reference_genome.fa',
         help = 'Reference genome')
         parser.add_argument(
-        '-i', '--rois', type = str, required = True, metavar = '',
+        '-i', '--rois', type = str, required = True, metavar = 'LIST',
         help = 'Input file with regions of interest (BED-formatted)')
         parser.add_argument(
-        '-p', '--port', type = str, required = True, metavar = '',
+        '-p', '--port', type = str, required = True, metavar = 'INT',
         help = 'Port where gfServer was loaded (BLAT)')
         parser.add_argument(
-        '-o', '--output', type = str, required = True, metavar = '', default = 'armadillo',
+        '-o', '--output', type = str, required = False, metavar = 'STR', default = 'armadillo',
         help = 'Set name. It will be used for output dir. (default: %(default)s)')
         return parser.parse_args()
 
