@@ -2,9 +2,9 @@
 #Define functions
 generalusage(){
  echo "Usage:
- - armadillo run [options] \t\t\t\t Run armadillo
- - armadillo data-prep -i input -g genome.fa -p port \t Create necessary files to run armadillo for a set of ROIs
- - armadillo config-file \t\t\t\t Create a configuration file to avoid using arguments in run mode.
+ - armadillo run [options] \t\t\t Run armadillo
+ - armadillo data-prep \t\t\t Create necessary files to run armadillo for a set of ROIs
+ - armadillo config-file \t\t\t Create a configuration file to avoid using arguments in run mode.
 
 Pablo Bousquets - XA Lab
 (2019)"

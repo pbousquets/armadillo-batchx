@@ -35,10 +35,10 @@ if [ "$EUID" -ne 0 ] && ! grep -q armadillo ~/.bashrc ## If not sudo, create a u
 then
 	echo "
 #alias to armadillo
-alias armadillo='$(realpath .)/armadillo'" >> ~/.bashrc
+alias armadillo='$(realpath $(dirname $0))/armadillo'" >> ~/.bashrc
 elif [ "$EUID" -eq 0 ] && ! grep -q armadillo /etc/bash.bashrc ## Add it to sudo bashrc ##
 then
 	echo "
 #alias to armadillo
-alias armadillo='$(realpath .)/armadillo'" >> /etc/bash.bashrc
+alias armadillo='$(realpath $(dirname $0))/armadillo'" >> /etc/bash.bashrc
 fi
