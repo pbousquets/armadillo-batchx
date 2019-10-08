@@ -1,6 +1,7 @@
 # Armadillo
 
-Armadillo is a pipeline design to recover mutations that belong to repetitive regions, which usually are discarded due to low confidence on the alignments.
+Mutations in repetitive regions are usually lost when analysing NGS data, as the alignment of repetitive regions are seldom trustful. Therefore, Armadillo is a pipeline designed to realign specifically those regions and recover mutations that were invisible for regular variant callers.
+
 
 ## Getting Started
 
@@ -29,7 +30,7 @@ Check that the dependencies are installed:
 ```
 cd armadillo
 
-bash check_dependencies.bash (run it as sudo to install the python packages globally)
+bash check_dependencies.bash #run it as sudo to install the python packages globally
 ```
 
 ## Getting armadillo ready
@@ -44,19 +45,24 @@ The port will stay opened unless we kill the task or shut down the computer.
 Also, the regions of interest must be analysed before running armadillo, to keep just those which are repetitive and get the coords of their copies. Armadillo can do that just by providing a reference genome, a BED-formatted list of regions of interest and the port previously opened for gfClient:
 
 ```
-
 ./armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome -p port -o output_dir
 ```
 
-### Break down into end to end tests
+### Running armadillo
 
-Explain what these tests test and why
+It's possible to use a configuration file to run armadillo. Just by using config-file option a configuration file will be copied at current working directory. Then, just change any parameter you want and run armadillo.
 
 ```
-Give an example
+./armadillo config-file
+./armadillo run configuration_file.txt
 ```
+Options can be also passed directly through the command line:
 
-## Built With
+```
+./armadillo config-file
+./armadillo run  -i ID -C control.bam -T tumor.bam [options]
+```
+## Built with:
 
 * [BWA](http://bio-bwa.sourceforge.net/) - Genome aligner
 * [Samtools](http://www.htslib.org/doc/samtools.html) - Bam files' management
