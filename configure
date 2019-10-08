@@ -27,4 +27,18 @@ done
 
 ##Set the installation path##
 installation_path="installation_path=$(dirname $(realpath $0))/"
-sed -i -e "4s:.*:${installation_path}:g" $(dirname $0)/scripts/default_config.txt
+sed -i -e "3s:.*:${installation_path}:g" $(dirname $0)/scripts/default_config.txt
+sed -i -e "3s:.*:${installation_path}:g" $(dirname $0)/configuration_file.txt
+
+##Set an alias to armadillo##
+if [ "$EUID" -ne 0 ] && ! grep -q armadillo ~/.bashrc ## If not sudo, create a user-specific alias ##
+then
+	echo "
+#alias to armadillo
+alias armadillo='$(realpath .)/armadillo'" >> ~/.bashrc
+elif [ "$EUID" -eq 0 ] && ! grep -q armadillo /etc/bash.bashrc ## Add it to sudo bashrc ##
+then
+	echo "
+#alias to armadillo
+alias armadillo='$(realpath .)/armadillo'" >> /etc/bash.bashrc
+fi
