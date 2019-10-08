@@ -39,7 +39,7 @@ alias armadillo='$(realpath $(dirname $0))/armadillo'" >> ~/.bashrc
 elif [ "$EUID" -ne 0 ] && grep -q armadillo ~/.bashrc ## Refresh the alias ##
 then
 	new_alias="alias armadillo='$(realpath $(dirname $0))/armadillo'"
-	sed -i "s/alias armadillo.*/$new_alias/g" ~/.bashrc
+	sed -i "s@alias armadillo.*@$new_alias@g" ~/.bashrc
 elif [ "$EUID" -eq 0 ] && ! grep -q armadillo /etc/bash.bashrc ## Add it to sudo bashrc ##
 then
 	echo "
@@ -48,5 +48,5 @@ alias armadillo='$(realpath $(dirname $0))/armadillo'" >> /etc/bash.bashrc
 elif [ "$EUID" -eq 0 ] && grep -q armadillo ~/.bashrc ## Refresh the alias ##
 then
 	new_alias="alias armadillo='$(realpath $(dirname $0))/armadillo'"
-	sed -i "s/alias armadillo.*/$new_alias/g" /etc/bash.bashrc
+	sed -i "s@alias armadillo.*@$new_alias@g" /etc/bash.bashrc
 fi
