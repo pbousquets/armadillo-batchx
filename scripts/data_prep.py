@@ -9,16 +9,16 @@ from subprocess import check_output
 def parse_args():
         parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest in BED format.')
         parser.add_argument(
-        '-g', '--genome_ref', type = str, required = True,
+        '-g', '--genome_ref', type = str, metavar = '', required = True,
         help = 'Reference genome')
         parser.add_argument(
-        '-i', '--rois', type = str, required = True,
+        '-i', '--rois', type = str, metavar = '', required = True,
         help = 'Input file with regions of interest (BED-formatted)')
         parser.add_argument(
-        '-p', '--port', type = str, required = True,
+        '-p', '--port', type = str, metavar = '', required = True,
         help = 'Port where gfServer was loaded')
         parser.add_argument(
-        '-o', '--output', type = str, required = False, default = 'armadillo',
+        '-o', '--output', type = str, metavar = '', required = False, default = 'armadillo',
         help = 'Set name. It will be used for output dir (default: %(default)s).')
         return parser.parse_args()
 
