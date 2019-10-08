@@ -62,10 +62,17 @@ echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control 
 
 if [ ${skip} = 'false' ]
 then
-	##Check if needed files exist
+	##Check if needed files exist##
 	evaluate $rois_list ROIs genome
 	evaluate $TD Tumor genome
 	evaluate $ND Control_genome
+
+	##Check if it was already analysed##
+	if [ -f $TD_minibam ] || [ -f $ND_minibam ]
+	then
+		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."
+		exit 0
+	fi
 
 	##Minibam extraction step##
 	extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} | tee -a pipeline.log
@@ -82,6 +89,11 @@ echo ${time}: Finding candidates...
 if [ -f ${case}_candidates.vcf ]
 then
 	rm ${case}_candidates.vcf
+fi
+
+if [ -f discarded_variants.log ]
+then
+	rm discarded_variants.log
 fi
 
 ##Filter step##
