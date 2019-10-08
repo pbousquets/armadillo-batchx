@@ -16,7 +16,7 @@ def parse_args():
         help = 'Input file with regions of interest (BED-formatted)')
         parser.add_argument(
         '-p', '--port', type = str, required = True,
-        help = 'Port where gfServer was loaded (BLAT)')
+        help = 'Port where gfServer was loaded')
         parser.add_argument(
         '-o', '--output', type = str, required = False, default = 'armadillo',
         help = 'Set name. It will be used for output dir (default: %(default)s).')
