@@ -1,6 +1,6 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
-installation_path=/home/pablo/armadillo/
+installation_path=''
 case='' ## ID ##
 root_dir='' ## Parent directory of the genomes ##
 scripts_dir=${installation_path}/'scripts' ## Armadillo scripts directory. Useful if experimenting with new changes on the code ##

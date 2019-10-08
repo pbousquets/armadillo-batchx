@@ -13,7 +13,7 @@ gfServer (>= v.35)
 python3 (>= v.3.7)
 samtools (>= v.1.9)
 
-Python will also use: argparse, gzip, multiprocessing, os, pyfaidx, re, sys, statistics and subprocess packages.
+The next python packages are also required: argparse, gzip, multiprocessing, os, pyfaidx, re, sys, statistics and subprocess packages. If any of them is missing, it'll be automatically installed when configuring armadillo.
 ```
 
 ### Installing

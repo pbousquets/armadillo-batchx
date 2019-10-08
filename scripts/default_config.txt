@@ -1,5 +1,4 @@
 ### CONFIGURATION FILE ###
-
 ## DATA ##
 installation_path=''
 case='' ## ID ##
