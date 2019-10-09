@@ -75,8 +75,8 @@ then
 	fi
 
 	##Minibam extraction step##
-	extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} | tee -a pipeline.log
-	extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} | tee -a pipeline.log
+	extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} 
 	rm -rf tmp_files
 
 else
