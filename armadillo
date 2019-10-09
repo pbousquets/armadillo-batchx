@@ -51,8 +51,8 @@ then
 	    esac
 	    shift
 	    shift
-	    python3 ${scripts_dir}/data_prep.py -i ${input} -g ${genome} -p ${port}
 	done
+	python3 ${scripts_dir}/data_prep.py -i ${input} -g ${genome} -p ${port}
 else
 	echo "Mode error: please use armadillo 'run', 'config-file' or 'data-prep'"
 	generalusage
