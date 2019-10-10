@@ -77,6 +77,9 @@ for line in rois:
         if line.startswith("#"): #Skip the header
                 continue
         col = line.strip().split()
+		if len(col)==1:
+			col = line.replace(":", "\t").replace("-", "\t").strip().split() #convert chr:st-end format to BED
+
         try:
                 chrom, start, end = col[0:3]
         except ValueError:
