@@ -41,13 +41,13 @@ args = parse_args()
 href = Fasta(args.genome_ref, rebuild=False) #Open the reference genome
 
 ##PREPARE THE DIRECTORIES##
-input = os.path.abspath(args.rois)
+input_file = os.path.abspath(args.rois)
 
 try:
     os.mkdir(args.output)
 except FileExistsError:
     answer = input("Warning: The output directory already exists. Do you want to overwrite (y/n)? \n")
-    if answer.lower() == "yes" or anser.lower() == "y":
+    if answer.lower() == "yes" or answer.lower() == "y":
         pass
     else:
         print("Exiting...")
@@ -68,10 +68,10 @@ except FileExistsError:
 refFASTA=open("armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
 
 ##READ THE INPUT ##
-if ".gz" in input:
-        rois = gzip.open(input, "rt")
+if ".gz" in input_file:
+        rois = gzip.open(input_file, "rt")
 else:
-        rois = open(input)
+        rois = open(input_file)
 
 for line in rois:
         if line.startswith("#"): #Skip the header
