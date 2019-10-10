@@ -38,16 +38,6 @@ then
 	exit
 fi
 
-##Create the directories and start the case
-if [ -d ${case} ]
-then
-	cd ${case}
-else
-	mkdir ${case}
-	cd ${case}
-	mkdir tmp_files
-fi
-
 TD=${root_dir}${tumor_genome}
 ND=${root_dir}${control_genome}
 ND_minibam="${case}control_merged.bam"
@@ -62,6 +52,15 @@ echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control 
 
 if [ ${skip} = 'false' ]
 then
+	if [ ! -d ${case} ]
+	then
+		mkdir ${case}
+		cd ${case}
+		mkdir tmp_files
+	else
+		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"
+		exit 0
+	fi
 	##Check if needed files exist##
 	evaluate $rois_list ROIs genome
 	evaluate $TD Tumor genome
@@ -76,11 +75,15 @@ then
 
 	##Minibam extraction step##
 	extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-	extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} 
+	extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
 	rm -rf tmp_files
 
 else
-	echo "Skipped minibam extraction." | tee -a pipeline.log
+	if [ -d ${case} ]
+	then
+		echo "Skipped minibam extraction." | tee -a pipeline.log
+	else
+		echo "$case doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
 fi
 
 time=$(date +%x%t%X)
