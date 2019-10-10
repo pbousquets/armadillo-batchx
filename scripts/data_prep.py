@@ -18,7 +18,7 @@ def parse_args():
         '-p', '--port', type = str, required = True,
         help = 'Port where gfServer was loaded')
         parser.add_argument(
-        '-o', '--output', type = str, required = False, default = 'armadillo',
+        '-o', '--output', type = str, required = False, default = 'armadillo_data',
         help = 'Set name. It will be used for output dir (default: %(default)s).')
         return parser.parse_args()
 
@@ -41,15 +41,15 @@ args = parse_args()
 href = Fasta(args.genome_ref, rebuild=False) #Open the reference genome
 
 ##PREPARE THE DIRECTORIES##
-os.mkdir
-refFASTA=open("armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
-
 try:
-    os.mkdir(args.output + "_data")
+    os.mkdir(args.output)
 except FileExistsError:
     print("Warning: armadillo_data directory already exists in this path.")
+    sys.exit(1)
 
-os.chdir(os.getcwd()+"/armadillo_data")
+refFASTA=open(args.output+"/armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
+
+os.chdir(os.getcwd()+"/"+args.output)
 
 try:
     os.mkdir("rois_copies_coords")
