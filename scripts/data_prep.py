@@ -82,8 +82,8 @@ for line in rois:
         except ValueError:
                 sys.exit("Input error: expected a three column file (chrosome, start, end). Input has " + str(len(col))+ " columns")
 
-        if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"):
-            coord = str(chrom) + ":" + str(int(start) - 100) + "-" + str(int(end) + 100) #We add +100 bp to be sure that all reads align, even in those in the ends of the exons
+        coord = str(chrom) + ":" + str(int(start) - 100) + "-" + str(int(end) + 100) #We add +100 bp to be sure that all reads align, even in those in the ends of the exons
+        if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"): #Do not analyse those that already exist
             orig_coord = str(chrom) + ":" + str(start) + "-" + str(end)
 
             miniFASTA = open("miniFASTA/" + coord + ".fa", "w+") #Create a FASTA for each region
