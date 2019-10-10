@@ -44,10 +44,12 @@ href = Fasta(args.genome_ref, rebuild=False) #Open the reference genome
 try:
     os.mkdir(args.output)
 except FileExistsError:
-    print("Warning: armadillo_data directory already exists in this path.")
-    sys.exit(1)
-
-refFASTA=open(args.output+"/armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
+    answer = input("Warning: The output directory already exists. Do you want to overwrite (y/n)?")
+    if lower(answer) == "yes" or lower(answer) == "y":
+        pass
+    else:
+        print("Exiting...")
+        sys.exit(1)
 
 os.chdir(os.getcwd()+"/"+args.output)
 
@@ -60,6 +62,8 @@ try:
     os.mkdir("miniFASTA")
 except FileExistsError:
     pass
+
+refFASTA=open(armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
 
 ##READ THE INPUT ##
 if ".gz" in args.rois:
