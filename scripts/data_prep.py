@@ -97,12 +97,13 @@ for line in rois:
             miniFASTA.close()
         else:
             continue
+refFASTA.close()
 
 ##Index the fasta files##
-fastas = os.listdir("miniFASTA")
+fastas = [file for file in os.listdir("miniFASTA") if file.endswith(".fa")]
 for fasta in fastas:
-	if any(substring in fasta for substring in [".sa", ".amb", ".ann", ".pac", ".bwt", "fai"]): #Don't try to index the indexes if exist
-		pass
+	if os.path.isfile("miniFASTA/"+fasta+".fai"): #Don't reindex
+		continue
 	else:
 		os.system("bwa index miniFASTA/" + fasta)
 		os.system("samtools faidx miniFASTA/" + fasta)
