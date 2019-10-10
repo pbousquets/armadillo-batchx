@@ -63,7 +63,7 @@ try:
 except FileExistsError:
     pass
 
-refFASTA=open(armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
+refFASTA=open("armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
 
 ##READ THE INPUT ##
 if ".gz" in args.rois:
