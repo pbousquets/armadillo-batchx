@@ -47,20 +47,20 @@ TD_minibam="${case}tumor_merged.bam"
 evaluate $ref_genome Reference genome
 evaluate $repeatsDB repeatsDB
 
-##Run pipeline
-echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  List of ROIs: $rois_list   \n  Blat coordinates directory: $blat_coords   \n  miniFasta directory: $miniFasta_dir   \n  RepeatsDB: $repeatsDB   \n  Reference genome: $ref_genome   \n  Scripts directory: $scripts_dir   \n  Min. coverage: $mincov   \n  Control max. mut reads: $control_cutoff   \n  Sequencing error rate: $seq_error   \n  Control contamination (%): $control_contamination    \n  Tumor cutoff: $tumor_cutoff   \n  Control quality: $control_qual   \n  Base quality: $tum_qual   \n  Mapping quality cutoff: $mapq   \n  Read length: $read_length   \n  Max errors: $max_errors   \n  GC content cutoff: $gc_content   \n  Threads: $threads   \n  Print: $print   \n  Skip: $skip   \n  Port: $port \n" | tee -a pipeline.log
-
 if [ ${skip} = 'false' ]
 then
 	if [ ! -d ${case} ]
 	then
-		mkdir ${case}
+		mkdir -p ${case}/tmp_files
 		cd ${case}
-		mkdir tmp_files
+
+		##Run pipeline##
+		echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  List of ROIs: $rois_list   \n  Blat coordinates directory: $blat_coords   \n  miniFasta directory: $miniFasta_dir   \n  RepeatsDB: $repeatsDB   \n  Reference genome: $ref_genome   \n  Scripts directory: $scripts_dir   \n  Min. coverage: $mincov   \n  Control max. mut reads: $control_cutoff   \n  Sequencing error rate: $seq_error   \n  Control contamination (%): $control_contamination    \n  Tumor cutoff: $tumor_cutoff   \n  Control quality: $control_qual   \n  Base quality: $tum_qual   \n  Mapping quality cutoff: $mapq   \n  Read length: $read_length   \n  Max errors: $max_errors   \n  GC content cutoff: $gc_content   \n  Threads: $threads   \n  Print: $print   \n  Skip: $skip   \n  Port: $port \n" | tee -a pipeline.log
 	else
 		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"
 		exit 0
 	fi
+
 	##Check if needed files exist##
 	evaluate $rois_list ROIs genome
 	evaluate $TD Tumor genome
@@ -84,6 +84,7 @@ else
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
 		echo "$case doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
+	fi
 fi
 
 time=$(date +%x%t%X)
