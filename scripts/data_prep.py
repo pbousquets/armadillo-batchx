@@ -41,6 +41,8 @@ args = parse_args()
 href = Fasta(args.genome_ref, rebuild=False) #Open the reference genome
 
 ##PREPARE THE DIRECTORIES##
+input = os.path.abspath(args.rois)
+
 try:
     os.mkdir(args.output)
 except FileExistsError:
@@ -66,10 +68,10 @@ except FileExistsError:
 refFASTA=open("armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
 
 ##READ THE INPUT ##
-if ".gz" in args.rois:
-        rois = gzip.open(args.rois, "rt")
+if ".gz" in input:
+        rois = gzip.open(input, "rt")
 else:
-        rois = open(args.rois)
+        rois = open(input)
 
 for line in rois:
         if line.startswith("#"): #Skip the header
