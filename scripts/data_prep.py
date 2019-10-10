@@ -46,8 +46,8 @@ input = os.path.abspath(args.rois)
 try:
     os.mkdir(args.output)
 except FileExistsError:
-    answer = input("Warning: The output directory already exists. Do you want to overwrite (y/n)?")
-    if lower(answer) == "yes" or lower(answer) == "y":
+    answer = input("Warning: The output directory already exists. Do you want to overwrite (y/n)? \n")
+    if answer.lower() == "yes" or anser.lower() == "y":
         pass
     else:
         print("Exiting...")
@@ -97,7 +97,7 @@ for line in rois:
             miniFASTA.close()
         else:
             continue
-            
+
 ##Index the fasta files##
 fastas = os.listdir("miniFASTA")
 for fasta in fastas:
