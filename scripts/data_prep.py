@@ -86,14 +86,14 @@ for line in rois:
         if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"): #Do not analyse those that already exist
             orig_coord = str(chrom) + ":" + str(start) + "-" + str(end)
 
-            miniFASTA = open("miniFASTA/" + coord + ".fa", "w+") #Create a FASTA for each region
+            miniFASTA = open("miniFASTA/" + orig_coord + ".fa", "w+") #Create a FASTA for each region
             miniFASTA.write(">" + coord + "\n" + href[chrom][int(start)-100:int(end)+100].seq+"\n") #We'll align the reads against a quite larger region so that the ones that overlap only in the flanks can align too
             refFASTA.write(">" + coord + "\n" + href[chrom][int(start)-100:int(end)+100].seq+"\n")
             blat_input = ">"+orig_coord     + "\n" + href[chrom][int(start):int(end)].seq #Get the sequence of the region to run blat
             blat_command = ['gfClient', '-out=blast8','localhost', args.port , '', 'stdin', 'stdout']
             blat_result = check_output(blat_command, input=blat_input.encode()).decode().strip().split("\n")
             if len(blat_result) > 1:
-                    blat_parser(blat_result, coord)
+                    blat_parser(blat_result, orig_coord)
             miniFASTA.close()
         else:
             continue
