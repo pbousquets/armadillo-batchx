@@ -22,6 +22,6 @@ max_errors=2 ## Max. errors allowed in context analysis ##
 seq_error=0.00035 ## Sequencing error out of 1 ##
 read_length=151 ## Read length (bp) ##
 threads=3 ## Threads ##
-port='9001' ## Port previously opened for gfClient (Blat) ##
+port='9006' ## Port previously opened for gfClient (Blat) ##
 skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters. ##
 print='TRUE' ## Print a log file of discarded candidates ##
