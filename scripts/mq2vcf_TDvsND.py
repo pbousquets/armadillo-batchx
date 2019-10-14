@@ -136,7 +136,7 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
 	allreads = list()
 	reads_left = list()
 	for line in blat_result:
-		column = line.split()
+		column = line.strip().split("\t")
 		try:
 			ID = column[9]
 			if ID not in allreads:
@@ -152,6 +152,7 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
 def blat_search(fasta): # Blat search
 	blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
 	result = check_output(blat_command, input = fasta.encode()).decode().strip().split("\n")
+
 	reads_left,nbadreads = blat_filter(result)
 	return (reads_left, nbadreads)
 
