@@ -81,9 +81,11 @@ then
 else
 	if [ -d ${case} ]
 	then
+		cd $case
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
 		echo "$case doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
+		exit 0
 	fi
 fi
 
