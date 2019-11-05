@@ -23,6 +23,7 @@ def parse_args():
 	return parser.parse_args()
 
 def blat_parser(blat, filename):
+	print_fasta = False
 	for line in blat:
 		column=line.strip().split()
 		chr_stend=column[0].split(":")
@@ -30,12 +31,14 @@ def blat_parser(blat, filename):
 		end=st_end[1].split("_")
 		querylength=int(end[0])-int(st_end[0])
 		if float(column[2])>90 and float(column[3])/querylength*100 >= 85 and float(column[7])/querylength*100 <=115 and float(column[5])<=1: #90% identity, alignment length +/- 2%, gaps 1
+			print_fasta = True
 			log=open("rois_copies_coords/"+filename, "a+") #We'll have a log file where we'll append any useful coordinate, so we don't use it twice
 			if int(column[8])<int(column[9]): #We consider the start as the shortest coord, so if the it's in the negative strand, flip the coords
 				log.write(column[1]+":"+column[8]+"-"+column[9]+"\n")
 			else:
 				log.write(column[1]+":"+column[9]+"-"+column[8]+"\n")
 			log.close()
+	return(print_fasta)
 
 args = parse_args()
 href = Fasta(args.genome_ref, rebuild=False) #Open the reference genome
@@ -64,8 +67,6 @@ try:
 except FileExistsError:
 	pass
 
-refFASTA=open("armadillo_reference_genome.fa", "w+") #We'll write a new reference genome
-
 ##READ THE INPUT ##
 if ".gz" in input_file:
 	rois = gzip.open(input_file, "rt")
@@ -75,37 +76,44 @@ else:
 for line in rois:
 	if line.startswith("#"): #Skip the header
 		continue
+
 	col = line.strip().split()
+
 	if len(col)==1:
 		col = line.replace(":", "\t").replace("-", "\t").strip().split() #convert chr:st-end format to BED
+
 	try:
 		chrom, start, end = col[0:3]
 	except ValueError:
-		sys.exit("Input error: expected a three column file (chrosome, start, end). Input has " + str(len(col))+ " columns")
+		sys.exit("Input error: expected a BED file or a chr:start-end formatted file")
 	coord = str(chrom) + ":" + str(int(start) - 100) + "-" + str(int(end) + 100) #We add +100 bp to be sure that all reads align, even in those in the ends of the exons
 	if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"): #Do not analyse those that already exist
 		orig_coord = str(chrom) + ":" + str(start) + "-" + str(end)
-		miniFASTA = open("miniFASTA/" + orig_coord + ".fa", "w+") #Create a FASTA for each region
-		miniFASTA.write(">" + coord + "\n" + href[chrom][int(start)-101:int(end)+99].seq+"\n") #We'll align the reads against a quite larger region so that the ones that overlap only in the flanks can align too
-		refFASTA.write(">" + coord + "\n" + href[chrom][int(start)-101:int(end)+99].seq+"\n")
 		blat_input = ">"+orig_coord + "\n" + href[chrom][int(start):int(end)].seq #Get the sequence of the region to run blat
 		blat_command = ['gfClient', '-out=blast8','localhost', args.port , '', 'stdin', 'stdout']
 		blat_result = check_output(blat_command, input=blat_input.encode()).decode().strip().split("\n")
 		if len(blat_result) > 1:
-			blat_parser(blat_result, orig_coord)
+			print_fasta = blat_parser(blat_result, orig_coord)
+			if print_fasta:
+				miniFASTA = open("miniFASTA/" + orig_coord + ".fa", "w+") #Create a FASTA for each region
+				miniFASTA.write(">" + coord + "\n" + href[chrom][int(start)-101:int(end)+99].seq+"\n") #We'll align the reads against a quite larger region so that the ones that overlap only in the flanks can align too
+				miniFASTA.close()
 		else:
 			pass
-		miniFASTA.close()
 	else:
 		continue
-refFASTA.close()
 
-##Index the fasta files##
+## Index the fasta files ##
 fastas = [file for file in os.listdir("miniFASTA") if file.endswith(".fa")]
+concat = ''.join([open("miniFASTA/"+f).read() for f in fastas])
+refFASTA = open("armadillo_reference_genome.fa", "w+") #We'll write a merged reference genome
+refFASTA.write(concat)
+refFASTA.close()
+os.system("samtools faidx armadillo_reference_genome.fa")
+
 for fasta in fastas:
-	if os.path.isfile("miniFASTA/"+fasta+".fai"): #Don't reindex
+	if os.path.isfile("miniFASTA/"+fasta+".fai"): #Don't reindex if already done
 		continue
 	else:
 		os.system("bwa index miniFASTA/" + fasta)
 		os.system("samtools faidx miniFASTA/" + fasta)
-os.system("samtools faidx armadillo_reference_genome.fa")
