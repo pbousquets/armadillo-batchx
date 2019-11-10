@@ -89,19 +89,32 @@ for line in rois:
 	coord = str(chrom) + ":" + str(int(start) - 100) + "-" + str(int(end) + 100) #We add +100 bp to be sure that all reads align, even in those in the ends of the exons
 	if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"): #Do not analyse those that already exist
 		orig_coord = str(chrom) + ":" + str(start) + "-" + str(end)
-		blat_input = ">"+orig_coord + "\n" + href[chrom][int(start):int(end)].seq #Get the sequence of the region to run blat
+		blat_input = ">"+orig_coord + "\n" + href[chrom][int(start)-1:int(end)].seq #Get the sequence of the region to run blat. We substract 1 because 0 is the start reference for pyfasta
 		blat_command = ['gfClient', '-out=blast8','localhost', args.port , '', 'stdin', 'stdout']
 		blat_result = check_output(blat_command, input=blat_input.encode()).decode().strip().split("\n")
 		if len(blat_result) > 1:
 			print_fasta = blat_parser(blat_result, orig_coord)
 			if print_fasta:
 				miniFASTA = open("miniFASTA/" + orig_coord + ".fa", "w+") #Create a FASTA for each region
-				miniFASTA.write(">" + coord + "\n" + href[chrom][int(start)-101:int(end)+99].seq+"\n") #We'll align the reads against a quite larger region so that the ones that overlap only in the flanks can align too
+				miniFASTA.write(">" + coord + "\n" + href[chrom][int(start)-101:int(end)+100].seq+"\n") #We'll align the reads against a quite larger region so that the ones that overlap only in the flanks can align too
 				miniFASTA.close()
 		else:
 			pass
 	else:
 		continue
+
+## Remove duplicates
+files = [file for file in os.listdir("rois_copies_coords")]
+for file in files:
+	for line in open("rois_copies_coords/"+file):
+		line = line.strip()
+		if line != file and line in files and file in files:
+			os.remove("rois_copies_coords/"+line)
+			os.remove("miniFASTA/"+line+".fa")
+			files.remove(line)
+			print("Removed ", line, ". Duplicate of: ", file, sep = "", end = "\n")
+		else:
+			continue
 
 ## Index the fasta files ##
 fastas = [file for file in os.listdir("miniFASTA") if file.endswith(".fa")]
