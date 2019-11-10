@@ -42,6 +42,7 @@ def blat_parser(blat, filename):
 			log.close()
 	if printed == 1:
 		os.remove("rois_copies_coords/"+filename)
+		print_fasta = False
 	return(print_fasta)
 
 args = parse_args()
