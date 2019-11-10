@@ -24,6 +24,7 @@ def parse_args():
 
 def blat_parser(blat, filename):
 	print_fasta = False
+	printed = 0
 	for line in blat:
 		column=line.strip().split()
 		chr_stend=column[0].split(":")
@@ -32,12 +33,15 @@ def blat_parser(blat, filename):
 		querylength=int(end[0])-int(st_end[0])
 		if float(column[2])>90 and float(column[3])/querylength*100 >= 85 and float(column[7])/querylength*100 <=115 and float(column[5])<=1: #90% identity, alignment length +/- 2%, gaps 1
 			print_fasta = True
+			printed += 1
 			log=open("rois_copies_coords/"+filename, "a+") #We'll have a log file where we'll append any useful coordinate, so we don't use it twice
 			if int(column[8])<int(column[9]): #We consider the start as the shortest coord, so if the it's in the negative strand, flip the coords
 				log.write(column[1]+":"+column[8]+"-"+column[9]+"\n")
 			else:
 				log.write(column[1]+":"+column[9]+"-"+column[8]+"\n")
 			log.close()
+	if printed == 1:
+		os.remove("rois_copies_coords/"+filename)
 	return(print_fasta)
 
 args = parse_args()
