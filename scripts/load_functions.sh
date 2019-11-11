@@ -189,7 +189,7 @@ extract_minibam(){
 			PU=${sample}
 			RG="@RG\\tID:${sample}\\tSM:${SM}\\tPL:${PL}\\tLB:${LB}\\tPU:${PU}"
 			allCoords=$(cat ${blat_coords}/${file}) #Save its coords
-			samtools view -u -G 0x400 -G 0x4 ${sample} $allCoords | samtools fastq -N - 2>/dev/null|  bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > tmp_files/${file}.bam
+			samtools view -u -G 0x400 -G 0x4 ${sample} $allCoords | samtools fastq -N - 2>/dev/null|  bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > ${type}_tmp_files/${file}.bam
 			printf "\r Initial time: ${time}. Files left: $lines        "
 		else
 			echo "~" ${blat_coords}/${file} does not exist >> pipeline.log
@@ -199,7 +199,7 @@ extract_minibam(){
 	echo ${time}: Merging ${case} minibams. This may take a while | tee -a pipeline.log
 
 	iter=0
-	cd tmp_files
+	cd ${type}_tmp_files
 	while [ $(ls | grep -v tmp | wc -l) -ne 0 ]
 	do
 		iter=$((iter+1))

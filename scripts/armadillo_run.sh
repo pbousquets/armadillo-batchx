@@ -51,7 +51,8 @@ if [ ${skip} = 'false' ]
 then
 	if [ ! -d ${case} ]
 	then
-		mkdir -p ${case}/tmp_files
+		mkdir -p ${case}/tum_tmp_files
+		mkdir ${case}/cnt_tmp_files
 		cd ${case}
 
 		##Run pipeline##
@@ -72,10 +73,17 @@ then
 		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."
 		exit 0
 	fi
-
 	##Minibam extraction step##
-	extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-	extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	if [ $threads -eq 1 ]
+	then
+		extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	else
+		half_threads=$((threads/2))
+		extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads} &
+		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
+		wait
+	fi
 	rm -rf tmp_files
 
 else
