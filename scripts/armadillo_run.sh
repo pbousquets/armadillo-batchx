@@ -51,8 +51,8 @@ if [ ${skip} = 'false' ]
 then
 	if [ ! -d ${case} ]
 	then
-		mkdir -p ${case}/tum_tmp_files
-		mkdir ${case}/cnt_tmp_files
+		mkdir -p ${case}/tumor_tmp_files
+		mkdir ${case}/control_tmp_files
 		cd ${case}
 
 		##Run pipeline##
@@ -76,6 +76,7 @@ then
 	##Minibam extraction step##
 	if [ $threads -eq 1 ]
 	then
+		echo non parallelized
 		extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
 		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
 	else
@@ -84,7 +85,7 @@ then
 		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
 		wait
 	fi
-	rm -rf tmp_files
+	rm -rf *_tmp_files
 
 else
 	if [ -d ${case} ]
