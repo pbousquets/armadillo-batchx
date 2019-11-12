@@ -11,11 +11,14 @@ def parse_args():
 	"""Parse the input arguments, use '-h' for help"""
 	parser = argparse.ArgumentParser(description = 'Converts an MQ file into a VCF filtering by coverage')
 	parser.add_argument(
-	'-c', '--normal_coverage', type = int, required = False, default = 80,
+	'-c', '--normal_coverage', type = int, required = False, default = 80, metavar = 'INT'
 	help = 'Minimal proportion (%) of normal coverage in regard to tumor coverage (default: %(default)s)')
 	parser.add_argument(
 	'-cb', '--control_bam', type = str, required = True, metavar = 'FILE',
 	help = 'Tumor miniBAM to analyse')
+	parser.add_argument(
+	'-cov', '--genome_coverage', type = int, required = False, default = 30, metavar = 'INT',
+	help = 'Tumor genome coverage')
 	parser.add_argument(
 	'-f', '--full', action = 'store_true', default = True,
 	help = 'Print all variants to follow how each is filtered in each step. No arguments required. (default: NULL)')
@@ -276,7 +279,7 @@ def main_function(line):
 	coverage_nd, variants_nd = int(column[7]), column[8].upper()
 	## Store all variants in the region for context analysis if needed --> determinar si hace falta esto
 	## Filter by minimun normal coverage
-	if coverage_nd >= ((coverage_td*args.normal_coverage)/100):
+	if coverage_nd >= ((coverage_td*args.normal_coverage)/100) and coverage_td >= genome_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
 		## Correct the variants lists and get the indels for the variants list
 		corrected_variants_td, indel_list_td = correct_variants_list(variants_td)
 		corrected_variants_nd, variants_list_nd = correct_variants_list(variants_nd)
@@ -308,7 +311,6 @@ def main_function(line):
 		if len(variants_list_td_set) == 0:
 			pass
 		else:
-
 			real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.normal_max, coverage_td, coverage_nd)
 
 			## Annotate alts with frequency over threshold in control sample.
@@ -394,8 +396,11 @@ def main_function(line):
 							pass
 	elif args.full:
 		string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+"*"+"\t"+"*"
-		cov_ND = 100*coverage_nd/coverage_td
-		print_log(string, "low_control_coverage("+str(int(cov_ND))+"%)")
+		if coverage_td < genome_coverage * 1.5:
+			print_log(string, "low_tumor_coverage("+str(coverage_td)+"reads)")
+		else:
+			cov_ND = 100*coverage_nd/coverage_td
+			print_log(string, "low_control_coverage("+str(int(cov_ND))+"%)")
 	else:
 		pass
 

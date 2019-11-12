@@ -29,6 +29,7 @@ usage(){ #Create a function to display the help message
     \t -s,  --scriptsDir \t \t Directory where this pipeline's scripts are stored \n
     Cutoff options and parameters:
     \t -c,  --control_cov \t \t Minimum coverage with regard to the tumor sample [80%]
+    \t -cov,  --coverage \t \t Coverage of tumor genome [30]
     \t -cc, --control_cutoff \t \t Maximum variant coverage allowed in the control. [3]
     \t -ct, --control_contamination \t % tumor cellularity in the control sample [15]
     \t -tc, --tumor_cutoff \t \t Minimum coverage required for a variant to believe it's a good candidate  [6]
@@ -40,10 +41,10 @@ usage(){ #Create a function to display the help message
     \t -rl, --read_length \t \t Reads length [150 bp]
     \t -g,  --gc_content \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
-    \t -t,  --threads \t \t Threads running in parallel (only applies if parallelize mode on) [3]
+    \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
     \t -p,  --port \t \t \t Port used to perform blat analysis [9001]
-    \t -P,  --print \t \t \t Print the variants lost step by step [FALSE]
+    \t -P,  --print \t \t \t Print the variants lost in each step [FALSE]
     \t -h,  --help \t \t \t Display help message
 "
 }
@@ -53,113 +54,116 @@ parse_arguments(){
 	    PARAM=`echo $1 | awk -F= '{print $1}'`
 	    VALUE=`echo $2 | awk -F= '{print $1}'`
 	    case $PARAM in
-	    	-i | --input)
-				case=$VALUE
-				;;
-	        -s | --scriptsDir)
-	            scripts_dir=$VALUE
-	            ;;
-	        -f | --miniFasta)
-				miniFasta_dir=$VALUE
-				;;
-	        -B | --blat_coords)
-	            blat_coords=$VALUE
-	            ;;
-	      	-R | --ref_genome)
-				ref_genome=$VALUE
-				;;
-	        -r | --repeatsDB)
-	            repeatsDB=$VALUE
-	            ;;
-	        -l | --list)
-	            rois_list=$VALUE
-	            ;;
-	        -e | --max_errors)
-	            max_errors=$VALUE
-	            ;;
-	        -rl | --read_length)
-	            read_length=$VALUE
-	            ;;
-	        -b | --bamDir)
-				root_dir=$VALUE
-				;;
+			-i | --input)
+			case=$VALUE
+			;;
+			-s | --scriptsDir)
+			scripts_dir=$VALUE
+			;;
+			-f | --miniFasta)
+			miniFasta_dir=$VALUE
+			;;
+			-B | --blat_coords)
+			blat_coords=$VALUE
+			;;
+			-R | --ref_genome)
+			ref_genome=$VALUE
+			;;
+			-r | --repeatsDB)
+			repeatsDB=$VALUE
+			;;
+			-l | --list)
+			rois_list=$VALUE
+			;;
+			-e | --max_errors)
+			max_errors=$VALUE
+			;;
+			-rl | --read_length)
+			read_length=$VALUE
+			;;
+			-b | --bamDir)
+			root_dir=$VALUE
+			;;
 			-c | --control_cov)
-				mincov=$VALUE
-				;;
-	        -T | --tumor_genome)
-				tumor_genome=$VALUE
-				;;
-	        -C | --control_genome)
-				control_genome=$VALUE
-				;;
+			mincov=$VALUE
+			;;
+			-T | --tumor_genome)
+			tumor_genome=$VALUE
+			;;
+			-C | --control_genome)
+			control_genome=$VALUE
+			;;
+			-cov | --coverage)
+			coverage=$VALUE
+			;;
 			-cc | --control_cutoff)
-				control_cutoff=$VALUE
-				;;
-               -ct | --control_contamination)
-				control_contamination=$VALUE
-				;;
+			control_cutoff=$VALUE
+			;;
+			-ct | --control_contamination)
+			control_contamination=$VALUE
+			;;
 			-tc | --tumor_cutoff)
-				tumor_cutoff=$VALUE
-				;;
+			tumor_cutoff=$VALUE
+			;;
 			-m | --map_qual)
-				mapq=$VALUE
-				;;
+			mapq=$VALUE
+			;;
 			-p | --port)
-				port=$VALUE
-				;;
+			port=$VALUE
+			;;
 			-P | --print)
-				VALUE=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				case "$VALUE" in
-				"true" | "false")
-					print=$VALUE
-					;;
-				*)
-					echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
-					usage
-					exit
-					;;
-				esac
-				;;
+			VALUE=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			case "$VALUE" in
+			    "true" | "false")
+			    print=$VALUE
+			    ;;
+			    *)
+			    echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
+			    usage
+			    exit
+			    ;;
+			esac
+			;;
 			-t | --threads)
-				threads=$VALUE
-				;;
+			threads=$VALUE
+			;;
 			-g | --gc_content)
-				gc_content=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				;;
+			gc_content=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			;;
 			-q | --tum_qual)
-				tum_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				;;
+			tum_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			;;
 			-Q | --control_qual)
-				control_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				;;
+			control_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			;;
 			-tc | --tumor_cutoff)
-				tumor_cutoff=$VALUE
-				;;
+			tumor_cutoff=$VALUE
+			;;
 			-S | --skip)
-				VALUE=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				case "$VALUE" in
-				"true" | "false")
-					skip=$VALUE
-					;;
-				*)
-					echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
-					usage
-					exit
-					;;
-				esac
-				;;
-	        -h | --help)
-	            usage
-	            exit
-	            ;;
-	        *)
-	            echo "ERROR: unknown parameter \"$PARAM\" \n"
-	            usage
-	            exit 1
-	            ;;
-	    esac
-	    shift
-	    shift
+			VALUE=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			case "$VALUE" in
+			    "true" | "false")
+			    skip=$VALUE
+			    ;;
+			    *)
+			    echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
+			    usage
+			    exit
+			    ;;
+			esac
+			;;
+			-h | --help)
+			usage
+			exit
+			;;
+			*)
+			echo "ERROR: unknown parameter \"$PARAM\" \n"
+			usage
+			exit 1
+			;;
+		esac
+		shift
+		shift
 	done
 }
 
