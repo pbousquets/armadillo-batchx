@@ -35,7 +35,7 @@ def annotate(readslist, dic, line):
 								else:
 										bad.append(result)
 						if len(bad)/len(reads)* 100 <= TDcutoff:
-								dic[key]=[",".join(readslist),list()]
+								dic[key]=[",".join(reads),list()]
 								charact_dic[key]=characteristics
 								##ANNOTATE REPEATS
 								try:
