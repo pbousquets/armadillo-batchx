@@ -146,6 +146,8 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
                 allreads.append(ID) #store all IDs in a list
             if column[0] == column[10] and all(int(i) == 0 for i in column[1:8]) and int(column[11]) == 0 and column[12] == column[10] and ID not in badreads: #if perfect match, the change in the read is not a mutation..
                 badreads.append(ID) #.. so append it to the bad reads list
+            if column[1] > 1 and ID not in badreads: #if there are more than 1 changes, it unlikely will be a mutation
+                badreads.append(ID) #.. so append it to the bad reads list
         except IndexError:
             pass
     reads_left = list(set(allreads)-set(badreads))
