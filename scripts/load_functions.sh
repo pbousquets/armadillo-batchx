@@ -37,7 +37,6 @@ usage(){ #Create a function to display the help message
     \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
     \t -m,  --map_qual \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
     \t -se, --seq_error \t \t Estimation of sequencing error rate [0.00035]
-    \t -e,  --max_errors \t \t Maximum sequencing errors in reads [2%]
     \t -rl, --read_length \t \t Reads length [150 bp]
     \t -g,  --gc_content \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
@@ -74,9 +73,6 @@ parse_arguments(){
 			;;
 			-l | --list)
 			rois_list=$VALUE
-			;;
-			-e | --max_errors)
-			max_errors=$VALUE
 			;;
 			-rl | --read_length)
 			read_length=$VALUE

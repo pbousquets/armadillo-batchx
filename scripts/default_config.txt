@@ -16,7 +16,6 @@ control_contamination=5 ## Tumor reads expected in the control genome (%) ##
 coverage=30
 gc_content=80 ## Max. %GC allowed in reads ##
 mapq=40 ## Minimum mapq after realignment ##
-max_errors=2 ## Max. errors allowed in context analysis ##
 mincov=80 ## Minimum coverage in control in regard to tumor (%). If too low, untrustful variants may appear. ##
 port='9006' ## Port previously opened for gfClient (Blat) ##
 print='TRUE' ## Print a log file of discarded candidates ##

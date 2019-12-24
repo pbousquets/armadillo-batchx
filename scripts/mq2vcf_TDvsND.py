@@ -23,9 +23,6 @@ def parse_args():
     '-f', '--full', action = 'store_true', default = True,
     help = 'Print all variants to follow how each is filtered in each step. No arguments required. (default: NULL)')
     parser.add_argument(
-    '-e', '--max_errors', type = int, required = False, default = 2, metavar = 'INT',
-    help = 'Maximum context errors allowed in regard to read length(%%). (default: %(default)s %%)')
-    parser.add_argument(
     '-se', '--sequencing_error', type = float, required = False, default = 0.0003, metavar = 'FLOAT',
     help = 'Sequencing error rate (default: %(default)s)')
     parser.add_argument(
@@ -146,8 +143,6 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
                 allreads.append(ID) #store all IDs in a list
             if column[0] == column[10] and all(int(i) == 0 for i in column[1:8]) and int(column[11]) == 0 and column[12] == column[10] and ID not in badreads: #if perfect match, the change in the read is not a mutation..
                 badreads.append(ID) #.. so append it to the bad reads list
-            if column[1] > 1 and ID not in badreads: #if there are more than 1 changes, it unlikely will be a mutation
-                badreads.append(ID) #.. so append it to the bad reads list
         except IndexError:
             pass
     reads_left = list(set(allreads)-set(badreads))
@@ -163,7 +158,7 @@ def blat_search(fasta): # Blat search
 
 def pileup_to_msa(pileup):
     lines = 0
-    columns= []
+    columns = []
     noise = list()
     td_reads_set = set() #Store here all reads analysed
     nd_reads_set = set() #Store here all reads analysed
@@ -204,7 +199,7 @@ def pileup_to_msa(pileup):
                 done_reads.add(reads_nd[index])
 
         td_reads_set = td_reads_set | set(reads_td) #Append all reads to the set
-        nd_reads_set = nd_reads_set | set(reads_td) #Append all reads to the set
+        nd_reads_set = nd_reads_set | set(reads_nd) #Append all reads to the set
 
         td_to_complete = td_reads_set - set(reads_td)
         for each in td_to_complete:
@@ -229,8 +224,8 @@ def pileup_to_msa(pileup):
     if "*" in nd_msa.index: #Remove "*" as a row. It appears when in some positions there aren't reads and the pileup displays an asterisc.
         nd_msa.drop("*", axis=0, inplace=True)
 
-    mean_noise = statistics.mean(noise)
-    stdev_noise = statistics.stdev(noise)
+    mean_noise = int(statistics.mean(noise))
+    stdev_noise = int(statistics.stdev(noise))
 
     return(td_msa, nd_msa, mean_noise, stdev_noise)
 
@@ -304,11 +299,10 @@ def analyse_context(chrom, mut_pos, mut_base):
     ## Analyse the tumor msa to extract the context ##
     context, bad_positions, context_error, context_frq = extract_context(td_msa, mut_pos, mut_base)
 
-    if bad_positions > 0.2 * len(context): #We allow one discrepant position for every 5 context variants (20%). If greater, we'll discard de variant.
-        ctxt_unreliable_variants = 99 #Set values for ctxt_unreliable_variants and control_ctxt_unreliable_variants so we can end the function without crushing.
+    if bad_positions > 0.1 * len(context): #We allow one discrepant position for every 5 context variants (20%). If greater, we'll discard de variant.
+        ctxt_unreliable_variants = 99 #Set values for ctxt_unreliable_variants and control_ctxt_unreliable_variants so we can end the function without crashing.
         control_ctxt_unreliable_variants = 99
-    else:
-        ## Find the context in the normal sample and in unmutated tumoral reads ##
+    else:    # Find the context in the normal sample and in unmutated tumoral reads
         ctxt_unreliable_variants = analyse_tumor_context(td_msa, context, context_frq)
         control_ctxt_unreliable_variants = analyse_control(nd_msa, context, mut_pos, mut_base)
 
@@ -430,7 +424,7 @@ def main_function(line):
         mut_base = element[1]
         ctxt_unreliable_variants, control_ctxt_unreliable_variants, context_length, context_error, bad_positions, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
 
-        if context_length != 0 and (ctxt_unreliable_variants/context_length > 0.2 or control_ctxt_unreliable_variants/context_length > 0.2):
+        if context_length != 0 and (ctxt_unreliable_variants/context_length > 0.2 or control_ctxt_unreliable_variants > 0):
             if args.full: #Remove the mutation if the context only exists in the mutant reads
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "context_errors")
