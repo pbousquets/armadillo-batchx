@@ -146,6 +146,8 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
                 allreads.append(ID) #store all IDs in a list
             if column[0] == column[10] and all(int(i) == 0 for i in column[1:8]) and int(column[11]) == 0 and column[12] == column[10] and ID not in badreads: #if perfect match, the change in the read is not a mutation..
                 badreads.append(ID) #.. so append it to the bad reads list
+            if column[1] > 1 and ID not in badreads: #if there are more than 1 changes, it unlikely will be a mutation
+                badreads.append(ID) #.. so append it to the bad reads list
         except IndexError:
             pass
     reads_left = list(set(allreads)-set(badreads))
@@ -159,75 +161,15 @@ def blat_search(fasta): # Blat search
     reads_left,nbadreads = blat_filter(result)
     return (reads_left, nbadreads)
 
-def variantslist_correction(variants_list):
-    variants = list(variants_list)
-    while '+' in variants or '-' in variants or '^' in variants or '$' in variants: #To convert the indels in . to count them only once
-        index_list = (j for j, k in enumerate(variants) if k == '+' or k == '-' or k == '^' or k == '$') #j is the index and k the element in variants, so if the element is + or -, it returns its index
-        n = next(index_list) #To focus on the first element
-        if variants[n] == '^': #^ represents the start of the read and the following character shows the mapQ of the read, thus we delete one of the symbols to take into account only once that mapQ value
-            variants[n:n+2] = ''
-            continue
-        elif variants[n] == '$': #$ represents the end of a read segment, but the read mapQ value doesn't appear, so we have to remove the symbol
-            variants[n:n+1] = ''
-            continue
-        else: #indel
-            try:
-                size = int(str(variants[n+1])+str(variants[n+2]))+2 #In case the indel had more than 9 changes
-            except ValueError:
-                size = int(variants[n+1])+1 #The size of the indel, which is the element following the - or + symbol
-            variants[n-1:n+size+1] = str(variants[n+1]) #To convert the indel pattern into a . (e.g. .+4ACGT > 4), thus there is only one symbol for each mapQ value. Note that before the indel pattern there is a . or , which is the symbol that has the mapQ value, so we also have to replace it
-            continue
-    return variants
-
-def variants_extract(variants, reads, pos, start_dict, end_dict, variants_dict, mut_pos):
-    variants = variantslist_correction(variants)
-    indices = [i for i, x in enumerate(variants) if x not in [",", "."]]
-    mut_prefix = str(mut_pos)+"_"
-    for idx in indices:
-        if reads[idx].startswith(mut_prefix):
-            continue
-        else:
-            start_dict[reads[idx]] = pos if reads[idx] not in start_dict else start_dict[reads[idx]] #Store the start of any read
-            end_dict[reads[idx]] = pos #Store the end of any read (the value will be replaced over and over until the last base of the read)
-            if reads[idx] not in variants_dict:
-                variants_dict[reads[idx]] = [str(pos)+"_"+str(variants[idx])]
-            else:
-                variants_dict[reads[idx]].append(str(pos)+"_"+str(variants[idx])) #Save the variants of each read in a dict
-    return(start_dict, end_dict, variants_dict)
-
-def init_msa_matrix(reads_list, corrected_variants_list, pos):
-    msa_data = dict()
-    for i in range(0, len(reads_list)):
-        msa_data[reads_list[i]] = corrected_variants_list[i]
-
-    msa = pd.DataFrame.from_dict(msa_data, orient='index', columns = [pos])
-
-    return(msa)
-
-def msa_matrix(msa, reads_list, corrected_variants_list, pos):
-    msa_data = dict()
-    for i in range(0, len(reads_list)):
-        msa_data[reads_list[i]] = corrected_variants_list[i]
-
-    ### Append a new column to the matrix
-    rownames = set(msa.index)
-    to_complete = set(reads_list) - rownames #Add the rows for those read that started in the current position
-    ended = rownames - set(reads_list) #Store those reads that already ended
-
-    for each in to_complete: #Add new reads that didn't appear in previous positions. Add "*" in those positions for those reads.
-        msa.loc[each] = ["*"] * msa.shape[1] #Add an asterisc in the previous positions of the reads that start in this position
-        msa_data[each] = corrected_variants_list[reads_list.index(each)]
-
-    for each in ended: #Add '*' for the ended ones
-        msa_data[each] = "*"
-
-    msa[pos] = pd.Series(msa_data)
-
-    return(msa)
-
 def pileup_to_msa(pileup):
-    first = True
+    lines = 0
+    columns= []
     noise = list()
+    td_reads_set = set() #Store here all reads analysed
+    nd_reads_set = set() #Store here all reads analysed
+    td_msa_dict = dict() #Store here the allele of each read in each position
+    nd_msa_dict = dict() #Store here the allele of each read in each position
+
     for line in pileup:
         column = line.strip().split()
         chrom, pos, ref = column[0], column[1], column[2]
@@ -237,16 +179,49 @@ def pileup_to_msa(pileup):
         ## Correct the variants lists and get the indels for the variants list ##
         corrected_variants_td, indel_list_td = correct_variants_list(variants_td)
         corrected_variants_nd, indel_list_nd = correct_variants_list(variants_nd)
-
-        if first:
-            td_msa = init_msa_matrix(reads_td, corrected_variants_td, pos)
-            nd_msa = init_msa_matrix(reads_nd, corrected_variants_nd, pos)
-            first = False
-        else:
-            td_msa = msa_matrix(td_msa, reads_td, corrected_variants_td, pos)
-            nd_msa = msa_matrix(nd_msa, reads_nd, corrected_variants_nd, pos)
-
         noise.append(len([i for i, x in enumerate(corrected_variants_td) if x not in [",", "."]]))
+
+        ##Create tumor msa##
+        done_reads = set()
+        for index in range(0, len(reads_td)):
+            if reads_td[index] not in td_msa_dict:
+                td_msa_dict[reads_td[index]] = ["*"] * lines # Create a list for each read with as many asteriscs as positions in which it didn't appear
+                td_msa_dict[reads_td[index]].append(corrected_variants_td[index]) #Append the variant
+                done_reads.add(reads_td[index])
+            elif reads_td[index] not in done_reads: #Make sure that we haven't read that read. Sometimes both mates overlap.
+                    td_msa_dict[reads_td[index]].append(corrected_variants_td[index]) #Append the variant
+                    done_reads.add(reads_td[index])
+
+        ##Create control msa##
+        done_reads = set()
+        for index in range(0, len(reads_nd)):
+            if reads_nd[index] not in nd_msa_dict:
+                nd_msa_dict[reads_nd[index]] = ["*"] * lines # Create a list for each read with as many asteriscs as positions in which it didn't appear
+                nd_msa_dict[reads_nd[index]].append(corrected_variants_nd[index]) #Append the variant
+                done_reads.add(reads_nd[index])
+            elif reads_nd[index] not in done_reads: #Make sure that we haven't read that read. Sometimes both mates overlap.
+                nd_msa_dict[reads_nd[index]].append(corrected_variants_nd[index]) #Append the variant
+                done_reads.add(reads_nd[index])
+
+        td_reads_set = td_reads_set | set(reads_td) #Append all reads to the set
+        nd_reads_set = nd_reads_set | set(reads_td) #Append all reads to the set
+
+        td_to_complete = td_reads_set - set(reads_td)
+        for each in td_to_complete:
+            td_msa_dict[each].append("*")
+
+        nd_to_complete = nd_reads_set - set(reads_nd)
+        for each in nd_to_complete:
+            nd_msa_dict[each].append("*")
+
+        lines +=1
+        columns.append(pos)
+    ## Do the msa ##
+    td_msa = pd.DataFrame(td_msa_dict).T
+    td_msa.columns = columns
+
+    nd_msa = pd.DataFrame(nd_msa_dict).T
+    nd_msa.columns = columns
 
     if "*" in td_msa.index: #Remove "*" as a row. It appears when in some positions there aren't reads and the pileup displays an asterisc.
         td_msa.drop("*", axis=0, inplace=True)
