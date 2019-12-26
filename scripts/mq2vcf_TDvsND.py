@@ -95,7 +95,7 @@ def most_common_variant(single_variants_list, full_variants_list_TD, full_varian
     for variant in single_variants_list:
         count_TD = full_variants_list_TD.count(variant)
         count_ND = full_variants_list_ND.count(variant)
-        if count_TD >= threshold_TD and count_ND <= args.normal_max : #We don't allow more than 3 reads in a mutation
+        if args.genome_coverage > count_TD >= threshold_TD and count_ND <= args.normal_max : #We don't allow more than 3 reads in a mutation
             alts.append(variant)
         elif count_TD >= threshold_TD and count_ND > args.normal_max: #Store a list of those that were discarded due to high freq in control (likely SNPs)
             badalts.append(variant)
@@ -261,30 +261,14 @@ def extract_context(msa, mut_pos, mut_base):
                 bad_positions += 1
     return(context, bad_positions, context_error, context_frq)
 
-def analyse_tumor_context(msa, context, context_frq):
-    unreliable_variants = 0
-    for variant in context:
-        ctxt_pos, ctxt_base = variant.split("_")
-        context_variant_frq = int(context_frq[variant])
-        total_variant_frq = msa[msa[ctxt_pos] == ctxt_base].shape[0] #Count the total context base frequency in the position
-
-        if total_variant_frq <= context_variant_frq + 2: #If the context base only appears in the mutant reads, it's not realiable. Ask for more a couple of non-mutant reads
-            unreliable_variants += 1
-    return(unreliable_variants)
-
-def analyse_control(msa, context, mut_pos, mut_base):
-    mut_pos = str(mut_pos)
-    ctxt_control_matches = dict()
-    control_unreliable_variants = 0
-
-    for variant in context:
-        ctxt_pos, ctxt_base  = variant.split("_")
-        ctxt_control_matches[variant] = msa[(msa[mut_pos] != mut_base) & (msa[mut_pos] != '*') & (msa[ctxt_pos] == ctxt_base)].shape[0]
-
-    for variant in ctxt_control_matches.keys():
-        control_unreliable_variants += 1 if ctxt_control_matches[variant] < 2 else control_unreliable_variants #If there are no reads with the context in the control, it's bad too
-
-    return(control_unreliable_variants)
+def find_non_mutant_context(msa, context, mut_pos, mut_base):
+    splitted_context = dict() #Store the context elements as pos:nucleotide
+    for each in context:
+        pos, nucleotide = each.split("_")
+        splitted_context[pos] = nucleotide
+    filtered_msa = msa.loc[(msa[list(splitted_context)] == pd.Series(splitted_context)).all(axis=1)] #Get the reads that contain the context.
+    filtered_msa[filtered_msa[str(mut_pos)] != mut_base] #Don't count the mutant reads. We want to know if context exist apart from the mutation.
+    return len(filtered_msa)
 
 def analyse_context(chrom, mut_pos, mut_base):
     ## Extract the pileup ##
@@ -299,14 +283,14 @@ def analyse_context(chrom, mut_pos, mut_base):
     ## Analyse the tumor msa to extract the context ##
     context, bad_positions, context_error, context_frq = extract_context(td_msa, mut_pos, mut_base)
 
-    if bad_positions > 0.1 * len(context): #We allow one discrepant position for every 5 context variants (20%). If greater, we'll discard de variant.
-        ctxt_unreliable_variants = 99 #Set values for ctxt_unreliable_variants and control_ctxt_unreliable_variants so we can end the function without crashing.
-        control_ctxt_unreliable_variants = 99
+    if bad_positions > 0.1 * len(context): #If greater, we'll discard de variant.
+        tumor_non_mut_context_length = 0 #Set values for tumor_non_mut_context_length and control_non_mut_context_length so we can end the function without crashing.
+        control_non_mut_context_length = 0
     else:    # Find the context in the normal sample and in unmutated tumoral reads
-        ctxt_unreliable_variants = analyse_tumor_context(td_msa, context, context_frq)
-        control_ctxt_unreliable_variants = analyse_control(nd_msa, context, mut_pos, mut_base)
+        tumor_non_mut_context_length = find_non_mutant_context(td_msa, context, mut_pos, mut_base)
+        control_non_mut_context_length = find_non_mutant_context(nd_msa, context, mut_pos, mut_base)
 
-    return(ctxt_unreliable_variants, control_ctxt_unreliable_variants, len(context), context_error, bad_positions, mean_noise, stdev_noise)
+    return(tumor_non_mut_context_length, control_non_mut_context_length, len(context), context_error, bad_positions, mean_noise, stdev_noise)
 
 
 def main_function(line):
@@ -315,7 +299,8 @@ def main_function(line):
     coverage_td, variants_td, qual_td, reads_td = int(column[3]), column[4].upper(), column[5], column[6].split(',')
     coverage_nd, variants_nd = int(column[7]), column[8].upper()
     ## Filter by minimun normal coverage
-    if coverage_nd < ((coverage_td*args.normal_coverage)/100) or coverage_td < args.genome_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
+    expected_nd_cov = coverage_td*args.normal_coverage/100
+    if coverage_nd < expected_nd_cov or coverage_td < args.genome_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
         if args.full:
             string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+"*"+"\t"+"*"
             if coverage_td < args.genome_coverage * 1.5:
@@ -422,9 +407,9 @@ def main_function(line):
 
         ##Phase the variants to check if all the reads containing the mutation come from the same region
         mut_base = element[1]
-        ctxt_unreliable_variants, control_ctxt_unreliable_variants, context_length, context_error, bad_positions, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
+        tumor_non_mut_context_length, control_non_mut_context_length, context_length, context_error, bad_positions, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
 
-        if context_length != 0 and (ctxt_unreliable_variants/context_length > 0.2 or control_ctxt_unreliable_variants > 0):
+        if context_length != 0 and (tumor_non_mut_context_length < 3 or control_non_mut_context_length < 3):
             if args.full: #Remove the mutation if the context only exists in the mutant reads
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "context_errors")
