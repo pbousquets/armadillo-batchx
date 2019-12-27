@@ -17,24 +17,24 @@ usage(){ #Create a function to display the help message
     Usage: armadillo run -i ID -C control.bam -T tumor.bam [options] || or || armadillo run configuration_file.txt \n
     Input options:
     \t -n,  --name \t \t \t Case or sample name to analyze
-    \t -rd,  --root_dir \t \t \t Root directory where the genomes are stored
+    \t -rd, --root_dir \t \t Root directory where the genomes are stored
     \t -C,  --control_genome \t \t Control sample genome
     \t -T,  --tumor_genome \t \t Tumour sample genome
-    \t -r,  --rois_list \t \t \t List of ROIs to analyze  \n
+    \t -r,  --rois_list \t \t List of ROIs to analyze  \n
     Databases options:
-    \t -ad,  --armadillo_data \t \t Path to armadillo data-prep command output
+    \t -ad, --armadillo_data \t Path to armadillo data-prep command output
     \t -r,  --repeatsDB \t \t Database of genome repeats
     \t -s,  --scripts_dir \t \t Directory where this pipeline's scripts are stored \n
     Cutoff options and parameters:
-    \t -cc,  --control_coverage \t \t Coverage of control genome [30]
-    \t -tc,  --tumor_coverage \t \t Coverage of tumor genome [30]
+    \t -cc, --control_coverage \t Coverage of control genome [30]
+    \t -tc, --tumor_coverage \t Coverage of tumor genome [30]
     \t -cm, --control_max \t \t Maximum variant coverage allowed in the control. [3]
-    \t -tt, --tumor_threshold \t \t Minimum coverage required for a variant to believe it's a good candidate  [6]
+    \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
     \t -q,  --base_quality \t \t Minimum base quality required to the tumour genome  [30]
     \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
-    \t -m,  --mapq \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
+    \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
     \t -rl, --read_length \t \t Reads length [150 bp]
-    \t -gc,  --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
+    \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
