@@ -11,20 +11,17 @@ def parse_args():
     """Parse the input arguments, use '-h' for help"""
     parser = argparse.ArgumentParser(description = 'Converts an MQ file into a VCF filtering by coverage')
     parser.add_argument(
-    '-c', '--normal_coverage', type = int, required = False, default = 80, metavar = 'INT',
-    help = 'Minimal proportion (%) of normal coverage in regard to tumor coverage (default: %(default)s)')
+    '-cc', '--control_coverage', type = int, required = False, default = 80, metavar = 'INT',
+    help = 'Minimal proportion (%) of control coverage in regard to tumor coverage (default: %(default)s)')
     parser.add_argument(
     '-cb', '--control_bam', type = str, required = True, metavar = 'FILE',
     help = 'Tumor miniBAM to analyse')
     parser.add_argument(
-    '-cov', '--genome_coverage', type = int, required = False, default = 30, metavar = 'INT',
+    '-tc', '--tumor_coverage', type = int, required = False, default = 30, metavar = 'INT',
     help = 'Tumor genome coverage')
     parser.add_argument(
     '-f', '--full', action = 'store_true', default = True,
     help = 'Print all variants to follow how each is filtered in each step. No arguments required. (default: NULL)')
-    parser.add_argument(
-    '-se', '--sequencing_error', type = float, required = False, default = 0.0003, metavar = 'FLOAT',
-    help = 'Sequencing error rate (default: %(default)s)')
     parser.add_argument(
     '-i', '--input', type = str, required = False, default = '-', metavar = 'FILE',
     help = 'MQ file to convert')
@@ -35,10 +32,7 @@ def parse_args():
     '-n', '--name', type = str, required = False, default = '.',
     help = 'Value for the ID field. (default: %(default)s)')
     parser.add_argument(
-    '-nt', '--normal_contamination', type = int, required = False, default = 15, metavar = 'INT',
-    help = 'Contamination %% in normal sample. (default: %(default)s)')
-    parser.add_argument(
-    '-nm', '--normal_max', type = int, required = False, default = 3, metavar = 'INT',
+    '-cm', '--control_max', type = int, required = False, default = 3, metavar = 'INT',
     help = 'Maximum mutant reads allowed in the control. (default: %(default)s)')
     parser.add_argument(
     '-p', '--port', type = str, required = False, default = '9001',
@@ -89,15 +83,15 @@ def correct_variants_list(variants):
             continue
     return(variants, indel_list)
 
-def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, normal_max, coverage_td, coverage_nd):
+def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, control_max, coverage_td, coverage_nd):
     alts = list()
     badalts = list()
     for variant in single_variants_list:
         count_TD = full_variants_list_TD.count(variant)
         count_ND = full_variants_list_ND.count(variant)
-        if args.genome_coverage > count_TD >= threshold_TD and count_ND <= args.normal_max : #We don't allow more than 3 reads in a mutation
+        if args.tumor_coverage > count_TD >= threshold_TD and count_ND <= args.control_max : #We don't allow more than 3 reads in a mutation
             alts.append(variant)
-        elif count_TD >= threshold_TD and count_ND > args.normal_max: #Store a list of those that were discarded due to high freq in control (likely SNPs)
+        elif count_TD >= threshold_TD and count_ND > args.control_max: #Store a list of those that were discarded due to high freq in control (likely SNPs)
             badalts.append(variant)
     return(alts, badalts)
 
@@ -146,8 +140,7 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
         except IndexError:
             pass
     reads_left = list(set(allreads)-set(badreads))
-    nbadreads = len(badreads)
-    return(reads_left, nbadreads)
+    return(reads_left, len(badreads))
 
 def blat_search(fasta): # Blat search
     blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
@@ -267,7 +260,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         pos, nucleotide = each.split("_")
         splitted_context[pos] = nucleotide
     filtered_msa = msa.loc[(msa[list(splitted_context)] == pd.Series(splitted_context)).all(axis=1)] #Get the reads that contain the context.
-    filtered_msa[filtered_msa[str(mut_pos)] != mut_base] #Don't count the mutant reads. We want to know if context exist apart from the mutation.
+    filtered_msa = filtered_msa[filtered_msa[str(mut_pos)] != mut_base] #Don't count the mutant reads. We want to know if context exist apart from the mutation.
     return len(filtered_msa)
 
 def analyse_context(chrom, mut_pos, mut_base):
@@ -286,24 +279,23 @@ def analyse_context(chrom, mut_pos, mut_base):
     if bad_positions > 0.1 * len(context): #If greater, we'll discard de variant.
         tumor_non_mut_context_length = 0 #Set values for tumor_non_mut_context_length and control_non_mut_context_length so we can end the function without crashing.
         control_non_mut_context_length = 0
-    else:    # Find the context in the normal sample and in unmutated tumoral reads
+    else:    # Find the context in the control sample and in unmutated tumoral reads
         tumor_non_mut_context_length = find_non_mutant_context(td_msa, context, mut_pos, mut_base)
         control_non_mut_context_length = find_non_mutant_context(nd_msa, context, mut_pos, mut_base)
 
     return(tumor_non_mut_context_length, control_non_mut_context_length, len(context), context_error, bad_positions, mean_noise, stdev_noise)
-
 
 def main_function(line):
     column = line.strip().split()
     chrom, pos, ref = column[0], column[1], column[2]
     coverage_td, variants_td, qual_td, reads_td = int(column[3]), column[4].upper(), column[5], column[6].split(',')
     coverage_nd, variants_nd = int(column[7]), column[8].upper()
-    ## Filter by minimun normal coverage
-    expected_nd_cov = coverage_td*args.normal_coverage/100
-    if coverage_nd < expected_nd_cov or coverage_td < args.genome_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
+    ## Filter by minimun control coverage
+    expected_nd_cov = coverage_td*args.control_coverage/100
+    if coverage_nd < expected_nd_cov or coverage_td < args.tumor_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
         if args.full:
             string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+"*"+"\t"+"*"
-            if coverage_td < args.genome_coverage * 1.5:
+            if coverage_td < args.tumor_coverage * 1.5:
                 print_log(string, "low_tumor_coverage("+str(coverage_td)+"reads)")
             else:
                 cov_ND = 100*coverage_nd/coverage_td
@@ -348,7 +340,7 @@ def main_function(line):
     else:
         pass
 
-    real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.normal_max, coverage_td, coverage_nd)
+    real_alts_td, bad_alts = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.control_max, coverage_td, coverage_nd)
 
     ## Annotate alts with frequency over threshold in control sample.
     if args.full:

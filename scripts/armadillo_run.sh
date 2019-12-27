@@ -31,7 +31,7 @@ then
 fi
 
 ##Check required variables
-if [ "$case" = '' ] || [ "$tumor_genome" = '' ] || [ "$control_genome" = '' ]
+if [ "$name" = '' ] || [ "$tumor_genome" = '' ] || [ "$control_genome" = '' ]
 then
 	echo "ERROR: No input provided."
 	usage
@@ -40,8 +40,8 @@ fi
 
 TD=${root_dir}${tumor_genome}
 ND=${root_dir}${control_genome}
-ND_minibam="${case}control_merged.bam"
-TD_minibam="${case}tumor_merged.bam"
+ND_minibam="${name}control_merged.bam"
+TD_minibam="${name}tumor_merged.bam"
 
 ##Check if files exist
 evaluate $ref_genome Reference genome
@@ -49,14 +49,18 @@ evaluate $repeatsDB repeatsDB
 
 if [ ${skip} = 'false' ]
 then
-	if [ ! -d ${case} ]
+	if [ ! -d ${name} ]
 	then
-		mkdir -p ${case}/tumor_tmp_files
-		mkdir ${case}/control_tmp_files
-		cd ${case}
+		mkdir -p ${name}/tumor_tmp_files
+		mkdir ${name}/control_tmp_files
+		cd ${name}
 
 		##Run pipeline##
-		echo "Final options:   \n  Input: $case   \n  Root dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  List of ROIs: $rois_list   \n  Blat coordinates directory: $blat_coords   \n  miniFasta directory: $miniFasta_dir   \n  RepeatsDB: $repeatsDB   \n  Reference genome: $ref_genome   \n  Scripts directory: $scripts_dir   \n  Coverage: $coverage   \n  Control min. coverage: $mincov   \n  Control max. mut reads: $control_cutoff   \n  Sequencing error rate: $seq_error   \n  Control contamination (%): $control_contamination    \n  Tumor cutoff: $tumor_cutoff   \n  Control quality: $control_qual   \n  Base quality: $tum_qual   \n  Mapping quality cutoff: $mapq   \n  Read length: $read_length   \n  Max errors: $max_errors   \n  GC content cutoff: $gc_content   \n  Threads: $threads   \n  Print: $print   \n  Skip: $skip   \n  Port: $port \n" | tee -a pipeline.log
+        echo "Final command: \n
+        armadillo run --name ${name} --root_dir $root_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --repeatsDB $repeatsDB --scripts_dir $scripts_dir --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_max $control_max --tumor_threshold $tumor_threshold --base_quality $base_quality --control_qual $control_qual --mapq $mapq --read_length $read_length --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
+
+        echo "Final options:   \n  Sample name: ${name}   \n  Genomes dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Repeats database: $repeatsDB   \n  Scripts directory: $scripts_dir   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_max   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Control base quality threshold: $control_qual   \n  Mapping quality threshold: $mapq   \n  Read length: $read_length   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
+
 	else
 		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"
 		exit 0
@@ -76,24 +80,23 @@ then
 	##Minibam extraction step##
 	if [ $threads -eq 1 ]
 	then
-		echo non parallelized
-		extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+		extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+		extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
 	else
 		half_threads=$((threads/2))
-		extract_minibam $case ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads} &
-		extract_minibam $case ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
+		extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads} &
+		extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
 		wait
 	fi
 	rm -rf *_tmp_files
 
 else
-	if [ -d ${case} ]
+	if [ -d ${name} ]
 	then
-		cd $case
+		cd $name
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
-		echo "$case doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
+		echo "$name doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
 		exit 0
 	fi
 fi
@@ -101,9 +104,9 @@ fi
 time=$(date +%x%t%X)
 echo ${time}: Finding candidates...
 
-if [ -f ${case}_candidates.vcf ]
+if [ -f ${name}_candidates.vcf ]
 then
-	rm ${case}_candidates.vcf
+	rm ${name}_candidates.vcf
 fi
 
 if [ -f discarded_variants.log ]
@@ -112,12 +115,12 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -cov ${coverage} -n ${case} -r ${ref_genome} -tt ${tumor_cutoff} -nt ${control_contamination} -se ${seq_error} -nm ${control_cutoff} -rl ${read_length} -gc ${gc_content} -q ${tum_qual} -c ${mincov} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 ${printopt}  > ${case}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
+samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${base_quality} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 ${printopt}  > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
 
-lines=$(wc -l ${case}_candidates.vcf | awk '{print $1}')
+lines=$(wc -l ${name}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]
 then
-	echo "### No changes found ###" >> ${case}_candidates.vcf
+	echo "### No changes found ###" >> ${name}_candidates.vcf
 	echo "No changes found" | tee -a pipeline.log
 fi
 

@@ -12,33 +12,29 @@ Pablo Bousquets - XA Lab
 usage(){ #Create a function to display the help message
     echo "
     ### ARMADILLO ###
-    To run armadillo, two genomes (case and control) are required.
+    To run armadillo, two genomes (tumor and control) are required.
     Also, remind this program was writen for hg19 aligned genomes, so the coordinates provided by default files belong to hg19 genome. \n
     Usage: armadillo run -i ID -C control.bam -T tumor.bam [options] || or || armadillo run configuration_file.txt \n
     Input options:
-    \t -i,  --input \t \t \t Case or sample name to analyze
-    \t -b,  --bamDir \t \t \t Root directory where the genomes are stored
+    \t -n,  --name \t \t \t Case or sample name to analyze
+    \t -rd,  --root_dir \t \t \t Root directory where the genomes are stored
     \t -C,  --control_genome \t \t Control sample genome
     \t -T,  --tumor_genome \t \t Tumour sample genome
-    \t -l,  --list \t \t \t List of ROIs to analyze  \n
+    \t -r,  --rois_list \t \t \t List of ROIs to analyze  \n
     Databases options:
-    \t -B,  --blat_coords \t \t Directory where the blat coords of each ROI are stored
-    \t -f,  --miniFasta \t \t Directory where the fasta of each exon is stored
+    \t -ad,  --armadillo_data \t \t Path to armadillo data-prep command output
     \t -r,  --repeatsDB \t \t Database of genome repeats
-    \t -R,  --ref_genome \t \t Repeats reference genome
-    \t -s,  --scriptsDir \t \t Directory where this pipeline's scripts are stored \n
+    \t -s,  --scripts_dir \t \t Directory where this pipeline's scripts are stored \n
     Cutoff options and parameters:
-    \t -c,  --control_cov \t \t Minimum coverage with regard to the tumor sample [80%]
-    \t -cov,  --coverage \t \t Coverage of tumor genome [30]
-    \t -cc, --control_cutoff \t \t Maximum variant coverage allowed in the control. [3]
-    \t -ct, --control_contamination \t % tumor cellularity in the control sample [15]
-    \t -tc, --tumor_cutoff \t \t Minimum coverage required for a variant to believe it's a good candidate  [6]
-    \t -q,  --tum_qual \t \t Minimum base quality required to the tumour genome  [30]
+    \t -cc,  --control_coverage \t \t Coverage of control genome [30]
+    \t -tc,  --tumor_coverage \t \t Coverage of tumor genome [30]
+    \t -cm, --control_max \t \t Maximum variant coverage allowed in the control. [3]
+    \t -tt, --tumor_threshold \t \t Minimum coverage required for a variant to believe it's a good candidate  [6]
+    \t -q,  --base_quality \t \t Minimum base quality required to the tumour genome  [30]
     \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
-    \t -m,  --map_qual \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
-    \t -se, --seq_error \t \t Estimation of sequencing error rate [0.00035]
+    \t -m,  --mapq \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
     \t -rl, --read_length \t \t Reads length [150 bp]
-    \t -g,  --gc_content \t \t Maximum GC% allowed in the reads  [80] \n
+    \t -gc,  --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
@@ -53,17 +49,14 @@ parse_arguments(){
 	    PARAM=`echo $1 | awk -F= '{print $1}'`
 	    VALUE=`echo $2 | awk -F= '{print $1}'`
 	    case $PARAM in
-			-i | --input)
-			case=$VALUE
+			-n | --name)
+			name=$VALUE
 			;;
-			-s | --scriptsDir)
+			-s | --scripts_dir)
 			scripts_dir=$VALUE
 			;;
-			-f | --miniFasta)
-			miniFasta_dir=$VALUE
-			;;
-			-B | --blat_coords)
-			blat_coords=$VALUE
+			-ad | --armadillo_data)
+			armadillo_data=$VALUE
 			;;
 			-R | --ref_genome)
 			ref_genome=$VALUE
@@ -71,17 +64,17 @@ parse_arguments(){
 			-r | --repeatsDB)
 			repeatsDB=$VALUE
 			;;
-			-l | --list)
+			-l | --rois_list)
 			rois_list=$VALUE
 			;;
 			-rl | --read_length)
 			read_length=$VALUE
 			;;
-			-b | --bamDir)
+			-rd | --root_dir)
 			root_dir=$VALUE
 			;;
-			-c | --control_cov)
-			mincov=$VALUE
+			-cc | --control_coverage)
+			control_coverage=$VALUE
 			;;
 			-T | --tumor_genome)
 			tumor_genome=$VALUE
@@ -89,19 +82,16 @@ parse_arguments(){
 			-C | --control_genome)
 			control_genome=$VALUE
 			;;
-			-cov | --coverage)
-			coverage=$VALUE
+			-tc | --tumor_coverage)
+			tumor_coverage=$VALUE
 			;;
-			-cc | --control_cutoff)
-			control_cutoff=$VALUE
+			-cm | --control_max)
+			control_max=$VALUE
 			;;
-			-ct | --control_contamination)
-			control_contamination=$VALUE
+			-tt | --tumor_threshold)
+			tumor_threshold=$VALUE
 			;;
-			-tc | --tumor_cutoff)
-			tumor_cutoff=$VALUE
-			;;
-			-m | --map_qual)
+			-m | --mapq)
 			mapq=$VALUE
 			;;
 			-p | --port)
@@ -114,7 +104,7 @@ parse_arguments(){
 			    print=$VALUE
 			    ;;
 			    *)
-			    echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
+			    echo "ERROR: --print argument possible values are: TRUE or FALSE\n"
 			    usage
 			    exit
 			    ;;
@@ -123,11 +113,11 @@ parse_arguments(){
 			-t | --threads)
 			threads=$VALUE
 			;;
-			-g | --gc_content)
-			gc_content=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			-gc | --GCcutoff)
+			GCcutoff=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
-			-q | --tum_qual)
-			tum_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
+			-q | --base_quality)
+			base_quality=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
 			-Q | --control_qual)
 			control_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
@@ -142,7 +132,7 @@ parse_arguments(){
 			    skip=$VALUE
 			    ;;
 			    *)
-			    echo "ERROR: Skip possible arguments are: TRUE or FALSE\n"
+			    echo "ERROR: --skip argument possible values are: TRUE or FALSE\n"
 			    usage
 			    exit
 			    ;;
@@ -166,7 +156,7 @@ parse_arguments(){
 extract_minibam(){
 	time=$(date +%x%t%X)
 	echo ${time}: Generating ${2} minibams... | tee -a pipeline.log
-	case=$1
+	name=$1
 	sample=$2
 	type=$3
 	blat_coords=$4 #Dir of blat coords of each exon
@@ -174,7 +164,7 @@ extract_minibam(){
 	rois_list=$6 #List of regions of interest
 	threads=$7
 	#list of regions
-	lines=$(cat $rois_list | wc -l )
+	lines=$(ls $blat_coords | wc -l )
 
 	cat $rois_list | tr ':-' '\t' | while read -r chr st end #Create a tmp minibam for each region
 	do
@@ -196,7 +186,7 @@ extract_minibam(){
 		fi
 	done
 	time=$(date +%x%t%X)
-	echo ${time}: Merging ${case} minibams. This may take a while | tee -a pipeline.log
+	echo ${time}: Merging ${name} minibams. This may take a while | tee -a pipeline.log
 
 	iter=0
 	cd ${type}_tmp_files
@@ -210,14 +200,14 @@ extract_minibam(){
 
 	if [ ${iter} -gt 1 ]
 	then
-		samtools merge - tmp_*.bam | samtools sort -@ threads -m 6000000000 -o ../${case}${type}_merged.bam -
+		samtools merge - tmp_*.bam | samtools sort -@ threads -m 6000000000 -o ../${name}${type}_merged.bam -
 		rm tmp_*.bam
 	else
-		samtools sort -@ ${threads} -m 6000000000 -o ../${case}${type}_merged.bam tmp_1.bam
+		samtools sort -@ ${threads} -m 6000000000 -o ../${name}${type}_merged.bam tmp_1.bam
 		rm tmp_1.bam
 	fi
 	cd ../
-	samtools index ${case}${type}_merged.bam
+	samtools index ${name}${type}_merged.bam
 
 
 	time=$(date +%x%t%X)

@@ -45,7 +45,7 @@ then
 	            ;;
 	        *)
 	            echo "ERROR: unknown parameter \"$PARAM\" \n"
-	            generalusage
+	            python3 ${scripts_dir}/data_prep.py --help
 	            exit 1
 	            ;;
 	    esac

@@ -1,7 +1,7 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
 armadillo_data="${installation_path}'lib/armadillo_data/" ##Output dir of prepare_data script ##
-case='' ## ID ##
+name='' ## sample name ##
 control_genome=''
 installation_path=''
 root_dir='' ## Parent directory of the genomes ##
@@ -10,18 +10,16 @@ repeatsDB=${installation_path}/'lib/hg19_repeatmasker_DB_sorted.bed.gz' ## Repea
 tumor_genome=''
 
 ## THRESHOLDS AND PARAMETERS ##
-control_cutoff=3 ## Max. variant reads allowed in the control. If two high, SNPs may appear. ##
+control_max=3 ## Max. variant reads allowed in the control. If two high, SNPs may appear. ##
 control_qual=0 ## Base quality to consider control variants. The lower it is, the more restrictive later ##
-control_contamination=5 ## Tumor reads expected in the control genome (%) ##
-coverage=30
-gc_content=80 ## Max. %GC allowed in reads ##
+tumor_coverage=30 ##Sequencing coverage of the tumor sample##
+control_coverage=30 ##Sequencing coverage of the control sample##
+GCcutoff=80 ## Max. %GC allowed in reads ##
 mapq=40 ## Minimum mapq after realignment ##
-mincov=80 ## Minimum coverage in control in regard to tumor (%). If too low, untrustful variants may appear. ##
 port='9006' ## Port previously opened for gfClient (Blat) ##
 print='TRUE' ## Print a log file of discarded candidates ##
 read_length=151 ## Read length (bp) ##
-seq_error=0.00035 ## Sequencing error out of 1 ##
 skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters. ##
 threads=3 ## Threads ##
-tumor_cutoff=4 ## Minimum reads in a variant ##
-tum_qual=30 ## Minimum base quality ##
+tumor_threshold=4 ## Minimum reads in a variant ##
+base_quality=30 ## Minimum base quality ##
