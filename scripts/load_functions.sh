@@ -1,13 +1,17 @@
 #!/bin/sh
 #Define functions
 generalusage(){
- echo "Usage:
+ echo "Program: Armadillo
+ Version: 1.0
+ Contact: Pablo Bousquets (bousquetspablo@uniovi.es)
+
+ Usage:
+
  - armadillo run \t\t\t Run armadillo
  - armadillo data-prep \t\t\t Create necessary files to run armadillo for a set of ROIs
  - armadillo config-file \t\t Create a configuration file to avoid using arguments in run mode.
 
-Pablo Bousquets - XA Lab
-(2019)"
+XA Lab - 2019"
 }
 usage(){ #Create a function to display the help message
     echo "
@@ -182,7 +186,7 @@ extract_minibam(){
 			samtools view -u -G 0x400 -G 0x4 ${sample} $allCoords | samtools fastq -N - 2>/dev/null|  bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > ${type}_tmp_files/${file}.bam
 			printf "\r Initial time: ${time}. Files left: $lines        "
 		else
-			echo "~" ${blat_coords}/${file} does not exist >> pipeline.log
+			echo "~" ${blat_coords}/${file} does not exist. Make sure it was in the armadillo data-prep list >> pipeline.log
 		fi
 	done
 	time=$(date +%x%t%X)
