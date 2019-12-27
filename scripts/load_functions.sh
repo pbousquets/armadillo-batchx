@@ -32,7 +32,7 @@ usage(){ #Create a function to display the help message
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
     \t -q,  --base_quality \t \t Minimum base quality required to the tumour genome  [30]
     \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
-    \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (note that most of them should be ~60) [40]
+    \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
     \t -rl, --read_length \t \t Reads length [150 bp]
     \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
