@@ -14,6 +14,7 @@ if [ -f $1 ] #Arguments or configuration file
 then
 	. $(dirname $1)/$(basename $1) # Read a config file
 	shift
+    parse_arguments $@
 else
 	parse_arguments $@ #Parse the arguments pass through the command line
 fi
