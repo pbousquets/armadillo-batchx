@@ -10,7 +10,7 @@ generalusage(){
    - armadillo data-prep \t\t Create necessary files to run armadillo for a set of ROIs
    - armadillo config-file \t\t Create a configuration file to avoid using arguments in run mode.
 
-XA Lab - 2019"
+ XA Lab - 2019"
 }
 usage(){ #Create a function to display the help message
     echo "
