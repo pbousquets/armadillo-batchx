@@ -1,7 +1,7 @@
 #!/bin/sh
 #Define functions
 generalusage(){
- echo "Program: Armadillo
+ echo " Program: Armadillo
  Version: 1.0
  Contact: Pablo Bousquets (bousquetspablo@uniovi.es)
 
