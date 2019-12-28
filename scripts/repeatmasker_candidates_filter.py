@@ -4,17 +4,12 @@
 from sys import argv, stdin
 import tabix
 repeatsDB=tabix.open(argv[1])
-TDcutoff=int(argv[2]) #Max duplicates allowed
+TDcutoff=int(argv[2]) #Max duplicates allowed (%)
 flank_length=int(argv[3])
 
 readslist=[]
 dic={}
 charact_dic={}
-
-if len(argv)==5: #If -f option (i.e., option print is TRUE)
-	prnt = True
-else:
-	prnt = False
 
 def annotate(readslist, dic, line):
 		##REMOVE DUPLICATES FIRST
@@ -24,7 +19,7 @@ def annotate(readslist, dic, line):
 		length=end-start
 		bad=list()
 
-		if flank_length < int(pos_TD) < length - flank_length: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
+		if flank_length - 5 < int(pos_TD) < length - flank_length + 5: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
 				reads=read_name.split(",")
 				key=chrom_TD+"_"+pos_TD+"_"+ID+"_"+REF_TD+"_"+ALT_TD #We need a unique key for each mutation
 				pos=int(chrom_TD.split(":")[1].split("-")[0])+ int(pos_TD)
@@ -45,13 +40,9 @@ def annotate(readslist, dic, line):
 								except tabix.TabixError:
 										pass
 						else:
-								if prnt:
-										f=open("duplicates.vcf", "a+")
-										f.write(line+"\n")
+							continue
 		else:
-				if prnt:
-						f=open("duplicates.vcf", "a+")
-						f.write(line.split()+"\n")
+				continue
 		return(readslist, dic, charact_dic)
 
 #print header
