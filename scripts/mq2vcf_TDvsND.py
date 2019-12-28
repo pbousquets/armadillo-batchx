@@ -6,6 +6,7 @@ from subprocess import check_output
 import argparse
 import statistics
 import pandas as pd
+import numpy as np
 
 def parse_args():
     """Parse the input arguments, use '-h' for help"""
@@ -226,7 +227,7 @@ def extract_context(msa, mut_pos, mut_base):
     context = set()
     context_frq = dict()
     bad_positions = 0
-    context_error = 0
+    seq_errors = 0
     mut_pos = str(mut_pos)
     only_mut_msa = msa[msa[mut_pos] == mut_base] #Filter the msa to keep only the mutant reads
 
@@ -240,7 +241,7 @@ def extract_context(msa, mut_pos, mut_base):
             variant_actual_frq = only_mut_msa[pos].tolist().count(variant) #"*" means the read doesn't map there, so we cannot count that one.
             context_discrepancies = len(only_mut_msa[pos].tolist()) - only_mut_msa[pos].tolist().count("*") - variant_actual_frq
             if variant_actual_frq == 1 and context_discrepancies > 0: #if the variant appears just once, it's just a sequencing error
-                context_error += 1
+                seq_errors += 1
                 continue
 
             if context_discrepancies == 0:
@@ -249,19 +250,28 @@ def extract_context(msa, mut_pos, mut_base):
             elif context_discrepancies == 1: #One discrepant read may be due just a sequencing error
                 context.add(pos+"_"+variant)
                 context_frq[pos+"_"+variant] = variant_actual_frq
-                context_error += 1
+                seq_errors += 1
             else:
                 bad_positions += 1
-    return(context, bad_positions, context_error, context_frq)
+    return(context, bad_positions, seq_errors, context_frq)
 
 def find_non_mutant_context(msa, context, mut_pos, mut_base):
     splitted_context = dict() #Store the context elements as pos:nucleotide
     for each in context:
         pos, nucleotide = each.split("_")
         splitted_context[pos] = nucleotide
-    filtered_msa = msa.loc[(msa[list(splitted_context)] == pd.Series(splitted_context)).all(axis=1)] #Get the reads that contain the context.
-    filtered_msa = filtered_msa[filtered_msa[str(mut_pos)] != mut_base] #Don't count the mutant reads. We want to know if context exist apart from the mutation.
-    return len(filtered_msa)
+
+    #filtered_msa = msa.loc[(msa[list(splitted_context)] == pd.Series(splitted_context)).all(axis=1)] #Get the reads that contain the context.
+    filtered_msa = msa[(msa[str(mut_pos)] != mut_base) & (msa[str(mut_pos)] != "*")] #Don't count the mutant reads. We want to know if context exist apart from the mutation. Also remove those that don't reach the mutation
+    for each in splitted_context.keys():
+        filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
+
+    ctxt_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
+
+    min_length_coincidence = int(len(context) * 0.6) #Only allow one asterisc per five contenxt elements
+    ctxt_msa.dropna(thresh = min_length_coincidence, inplace=True)
+    print(ctxt_msa)
+    return len(ctxt_msa)
 
 def analyse_context(chrom, mut_pos, mut_base):
     ## Extract the pileup ##
@@ -274,7 +284,7 @@ def analyse_context(chrom, mut_pos, mut_base):
     td_msa, nd_msa, mean_noise, stdev_noise = pileup_to_msa(pileup)
 
     ## Analyse the tumor msa to extract the context ##
-    context, bad_positions, context_error, context_frq = extract_context(td_msa, mut_pos, mut_base)
+    context, bad_positions, seq_errors, context_frq = extract_context(td_msa, mut_pos, mut_base)
 
     if bad_positions > 0.1 * len(context): #If greater, we'll discard de variant.
         tumor_non_mut_context_length = 0 #Set values for tumor_non_mut_context_length and control_non_mut_context_length so we can end the function without crashing.
@@ -283,7 +293,7 @@ def analyse_context(chrom, mut_pos, mut_base):
         tumor_non_mut_context_length = find_non_mutant_context(td_msa, context, mut_pos, mut_base)
         control_non_mut_context_length = find_non_mutant_context(nd_msa, context, mut_pos, mut_base)
 
-    return(tumor_non_mut_context_length, control_non_mut_context_length, len(context), context_error, bad_positions, mean_noise, stdev_noise)
+    return(tumor_non_mut_context_length, control_non_mut_context_length, len(context), seq_errors, mean_noise, stdev_noise)
 
 def main_function(line):
     column = line.strip().split()
@@ -399,12 +409,13 @@ def main_function(line):
 
         ##Phase the variants to check if all the reads containing the mutation come from the same region
         mut_base = element[1]
-        tumor_non_mut_context_length, control_non_mut_context_length, context_length, context_error, bad_positions, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
+        tumor_non_mut_context_length, control_non_mut_context_length, context_length, seq_errors, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
 
-        if context_length != 0 and (tumor_non_mut_context_length < 3 or control_non_mut_context_length < 3):
+        if context_length != 0 and (tumor_non_mut_context_length < 1 or control_non_mut_context_length < 1) and (tumor_non_mut_context_length < 3 and control_non_mut_context_length < 3):
+
             if args.full: #Remove the mutation if the context only exists in the mutant reads
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
-                print_log(string, "context_errors")
+                print_log(string, "context_issues")
                 continue
             else:
                 continue
@@ -412,7 +423,7 @@ def main_function(line):
             pass
 
         control_mutcov = variants_list_nd.count(mut_base)
-        characteristics = [len(reads_left), coverage_td, nbadreads, control_mutcov, coverage_nd, mean_noise, stdev_noise]
+        characteristics = [len(reads_left), nbadreads, seq_errors, coverage_td, control_mutcov, coverage_nd, mean_noise, stdev_noise]
         characteristics = list(map(str, characteristics))
         print(chrom, pos, args.name, element[0], element[1], ','.join(characteristics), ','.join(reads_left),"\n", sep = '\t', end = '')
 
