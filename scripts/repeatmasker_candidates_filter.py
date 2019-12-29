@@ -36,7 +36,7 @@ def annotate(readslist, dic, line):
 				try:
 					query=repeatsDB.querys(chrom_TD) #Do the query of the mut region
 					for element in query:
-                        dic[key][1]=(element[3])
+						dic[key][1]=(element[3])
 				except tabix.TabixError:
 					pass
 			else:
@@ -53,8 +53,8 @@ for line in stdin:
 	line=line.strip()
 	if line.startswith("#"):
 		print(line)
-        continue
-    else:
+		continue
+	else:
 		if len(line.split())==7:
 			readslist, dic, charact_dic=annotate(readslist, dic, line)
 		elif len(line.split())==14:
