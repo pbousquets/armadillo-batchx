@@ -434,7 +434,6 @@ if __name__ == '__main__':
         arg_list.append('--'+arg)
         arg_list.append(str(getattr(args, arg)))
     ## VCF header
-    header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'READS_NAME']
     print('##fileformat = VCFv4.2', '##Command = python3 %s %s' % (argv[0], ' '.join(arg_list)), '\t'.join(header), sep = '\n')
 
     ## Using multiprocessing.Pool each task is run in a differente thread with their own variables, and the result is given only when all the task are completed.

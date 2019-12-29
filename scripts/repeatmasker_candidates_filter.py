@@ -52,8 +52,9 @@ print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.jo
 for line in stdin:
 		line=line.strip()
 		if line.startswith("#"):
-				pass
-		else:
+				print(line)
+                continue
+        else:
 				if len(line.split())==7:
 						readslist, dic, charact_dic=annotate(readslist, dic, line)
 				elif len(line.split())==14:
