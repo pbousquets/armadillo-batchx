@@ -47,11 +47,10 @@ def annotate(readslist, dic, line):
 
 #print header
 header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'REPEATS', "READS"]
-print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.join(header), sep='\n', end='\n')
 
 for line in stdin:
 	if line.startswith("#"):
-		print(line)
+		print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), line, '\t'.join(header), sep='\n', end='\n')
 		continue
 	else:
 		line=line.strip()
