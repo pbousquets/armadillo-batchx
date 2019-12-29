@@ -50,11 +50,11 @@ header = ['#CHROM','POS','ID','REF','ALT', 'CHARACTERISTICS', 'REPEATS', "READS"
 print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), '\t'.join(header), sep='\n', end='\n')
 
 for line in stdin:
-	line=line.strip()
 	if line.startswith("#"):
 		print(line)
 		continue
 	else:
+		line=line.strip()
 		if len(line.split())==7:
 			readslist, dic, charact_dic=annotate(readslist, dic, line)
 		elif len(line.split())==14:
