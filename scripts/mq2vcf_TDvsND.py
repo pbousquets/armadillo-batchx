@@ -275,7 +275,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
     #Remove reads that contain too many asteriscs
     mut_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
     mut_msa = mut_msa.dropna(thresh = min_length_coincidence)
-    return len(ctxt_msa, len(mut_msa.index))
+    return (len(ctxt_msa), len(mut_msa.index))
 
 def analyse_context(chrom, mut_pos, mut_base):
     ## Extract the pileup ##
