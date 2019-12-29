@@ -269,8 +269,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
     ctxt_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
 
     min_length_coincidence = int(len(context) * 0.6) #Only allow one asterisc per five contenxt elements
-    ctxt_msa.dropna(thresh = min_length_coincidence, inplace=True)
-    print(ctxt_msa)
+    ctxt_msa = ctxt_msa.dropna(thresh = min_length_coincidence)
     return len(ctxt_msa)
 
 def analyse_context(chrom, mut_pos, mut_base):
