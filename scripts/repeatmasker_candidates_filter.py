@@ -40,9 +40,9 @@ def annotate(readslist, dic, line):
 								except tabix.TabixError:
 										pass
 						else:
-							continue
+							pass
 		else:
-				continue
+				pass
 		return(readslist, dic, charact_dic)
 
 #print header
