@@ -27,7 +27,7 @@ def annotate(readslist, dic, line):
 			for result in reads:
 				if result not in readslist:
 					readslist.append(result) #By using that list, we avoid duplicates of the same mutation (a unique mutation may appear several times as they may appear in any repeat of its real region)
-            	else:
+                else:
 					bad.append(result)
 			if len(bad)/len(reads)* 100 <= TDcutoff:
 				dic[key]=[",".join(reads),list()]
