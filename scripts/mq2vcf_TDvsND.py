@@ -284,7 +284,7 @@ def analyse_context(chrom, mut_pos, mut_base):
     ## Extract the pileup ##
     pileup_start = mut_pos - args.read_length if mut_pos >= args.read_length else 1 #Start can't be negative
     pileup_end = mut_pos + args.read_length
-    pileup_command = ["samtools", "mpileup", "--output-QNAME", "-q", "0", "-Q", str(args.base_quality), "-R", "-f",  args.reference_fasta, args.tumor_bam, args.control_bam, "-r", chrom+":"+str(pileup_start)+"-"+str(pileup_end)]
+    pileup_command = ["samtools", "mpileup", "--output-QNAME", "-q", "30", "-Q", str(args.base_quality), "-R", "-f",  args.reference_fasta, args.tumor_bam, args.control_bam, "-r", chrom+":"+str(pileup_start)+"-"+str(pileup_end)]
     pileup = check_output(pileup_command).decode().splitlines() #run samtools mpileup
 
     ## Convert the pileup into a msa ##
