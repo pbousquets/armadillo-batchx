@@ -126,7 +126,7 @@ def samt_view(bamdir, coord, splitreads): # Samtools: get reads' sequences
                 fastareads = fastareads+">"+column[0]+"\n"+column[9]+"\n" #Store as fasta. "\n" allows blat to read it as multiline
     return fastareads
 
-def blat_filter(blat_result, indel): #Filter the blat result to remove the reads with 100% identity
+def blat_filter(blat_result): #Filter the blat result to remove the reads with 100% identity
     badreads, goodreads, allreads, reads_left = list(), list(), list(), list()
     for line in blat_result:
         column = line.strip().split("\t")
@@ -137,20 +137,15 @@ def blat_filter(blat_result, indel): #Filter the blat result to remove the reads
             if column[0] == column[10] and all(int(i) == 0 for i in column[1:8]) and int(column[11]) == 0 and column[12] == column[10] and ID not in badreads: #if perfect match, the change in the read is not a mutation..
                 badreads.append(ID) #.. so append it to the bad reads list
                 continue
-            if indel and (column[6] > 0 or column[0] >= 0.95 * args.read_length or column[7] <= 25): #The read is bad if there is no indel, if the read has multiple mismatches or the indel is too big
-                goodreads.append(ID)
         except IndexError:
             pass
-    if indel:
-        badreads = set(allreads) - set(goodreads)
-    reads_left = list(set(allreads)-set(badreads))
+    reads_left = list(set(allreads) - set(badreads))
     return(reads_left, len(badreads))
 
-def blat_search(fasta, indel): # Blat search
+def blat_search(fasta): # Blat search
     blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
     result = check_output(blat_command, input = fasta.encode()).decode().strip().split("\n")
-
-    reads_left,nbadreads = blat_filter(result, indel)
+    reads_left,nbadreads = blat_filter(result)
     return (reads_left, nbadreads)
 
 def pileup_to_msa(pileup):
@@ -399,10 +394,14 @@ def main_function(line):
 
     for element in zip(ref_list, real_alts_td):
         real_reads_td = get_mut_reads(element[0], element[1], new_corrected_variants_td, new_reads_td)
-        if element[1] in ["+", "-"]:
-            indel = True
+        if element[1] in ["+", "-"]: #Don't consider indels
+            if args.full:
+                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+                print_log(string, "indel")
+            else:
+                continue
         else:
-            indel = False
+            pass
 
         ##Launch polyfilter
         coord = chrom+":"+str(pos)+"-"+str(pos)
@@ -412,7 +411,7 @@ def main_function(line):
         else:
             pass
 
-        reads_left,nbadreads = blat_search(reads_fasta, indel) #Launch blat to remove perfect reads
+        reads_left,nbadreads = blat_search(reads_fasta) #Launch blat to remove perfect reads
         if len(reads_left) < args.tumor_threshold: #If there are enough reads, go on
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
