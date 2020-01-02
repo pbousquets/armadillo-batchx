@@ -394,7 +394,7 @@ def main_function(line):
 
     for element in zip(ref_list, real_alts_td):
         real_reads_td = get_mut_reads(element[0], element[1], new_corrected_variants_td, new_reads_td)
-        if element[1] in ["+", "-"]: #Don't consider indels
+        if len(element[1]) > 1 or len(element[0]) > 1: #Don't consider indels
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "indel")
