@@ -115,7 +115,7 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${control_qual} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${base_quality} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
+samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${control_qual} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
 
 lines=$(wc -l ${name}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]
