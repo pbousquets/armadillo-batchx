@@ -264,7 +264,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
     #Remove reads that contain too many asteriscs
     ctxt_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
-    min_length_coincidence = int(len(context) * 0.6) #Only allow one asterisc per five contenxt elements
+    min_length_coincidence = int(len(context) * 0.6) #Only allow two asteriscs per five contenxt elements
     ctxt_msa = ctxt_msa.dropna(thresh = min_length_coincidence)
     #Count mut reads with the context
     filtered_msa = msa[(msa[str(mut_pos)] == mut_base)] #Don't count the mutant reads. We want to know if context exist apart from the mutation. Also remove those that don't reach the mutation
@@ -273,7 +273,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
     #Remove reads that contain too many asteriscs
     mut_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
     mut_msa = mut_msa.dropna(thresh = min_length_coincidence)
-    return (len(ctxt_msa), len(mut_msa.index))
+    return (len(ctxt_msa), len(mut_msa))
 
 def analyse_context(chrom, mut_pos, mut_base):
     ## Extract the pileup ##
@@ -295,7 +295,7 @@ def analyse_context(chrom, mut_pos, mut_base):
         tumor_non_mut_context_length, tumor_mut_reads = find_non_mutant_context(td_msa, context, mut_pos, mut_base)
         control_non_mut_context_length, control_mut_reads = find_non_mutant_context(nd_msa, context, mut_pos, mut_base)
 
-    return(tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, len(context), seq_errors, mean_noise, stdev_noise)
+    return(tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, len(context), seq_errors, mean_noise, stdev_noise)
 
 def main_function(line):
     column = line.strip().split()
@@ -424,7 +424,7 @@ def main_function(line):
 
         ##Phase the variants to check if all the reads containing the mutation come from the same region
         mut_base = element[1]
-        tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
+        tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise = analyse_context(chrom, pos, mut_base)
 
         if context_length != 0 and (tumor_non_mut_context_length < 1 or control_non_mut_context_length < 1) and (tumor_non_mut_context_length < 3 and control_non_mut_context_length < 3):
             if args.full: #Remove the mutation if the context only exists in the mutant reads
@@ -435,6 +435,7 @@ def main_function(line):
                 continue
         else:
             pass
+
         if control_mut_reads > args.control_max:
             if args.full: #Remove the mutation if the context only exists in the mutant reads
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
@@ -442,6 +443,15 @@ def main_function(line):
                 continue
             else:
                 continue
+
+        if tumor_mut_reads < args.tumor_threshold:
+            if args.full: #Remove the mutation if the context only exists in the mutant reads
+                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+                print_log(string, "not_enough_reads")
+                continue
+            else:
+                continue
+
         control_mutcov = variants_list_nd.count(mut_base)
         characteristics = [len(reads_left), nbadreads, seq_errors, coverage_td, control_mutcov, coverage_nd, mean_noise, stdev_noise]
         characteristics = list(map(str, characteristics))
