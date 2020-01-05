@@ -437,15 +437,15 @@ def main_function(line):
             pass
 
         if control_mut_reads > args.control_max:
-            if args.full: #Remove the mutation if the context only exists in the mutant reads
+            if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
-                print_log(string, "too_many_mutreads_in_control")
+                print_log(string, "germline_change")
                 continue
             else:
                 continue
 
         if tumor_mut_reads < args.tumor_threshold:
-            if args.full: #Remove the mutation if the context only exists in the mutant reads
+            if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "not_enough_reads")
                 continue
