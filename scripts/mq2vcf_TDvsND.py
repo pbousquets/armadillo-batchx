@@ -264,8 +264,13 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
     #Remove reads that contain too many asteriscs
     ctxt_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
-    min_length_coincidence = int(len(context) * 0.6) #Only allow two asteriscs per five contenxt elements
+    min_length_coincidence = int(len(context) * 0.75) #Only allow one asterisc per four contenxt elements
     ctxt_msa = ctxt_msa.dropna(thresh = min_length_coincidence)
+    column_nas = [len(ctxt_msa) - ctxt_msa[col].count() for col in ctxt_msa.columns]
+    if any(excesive_na > len(ctxt_msa) * 0.5 for excesive_na in column_nas):
+        ctxt_msa = [] # If any column isn't well represented (more than the half reads contain NAs), remove the matrix to make sure that the mutation is discarded afterwards
+    else:
+        pass
     #Count mut reads with the context
     filtered_msa = msa[(msa[str(mut_pos)] == mut_base)] #Don't count the mutant reads. We want to know if context exist apart from the mutation. Also remove those that don't reach the mutation
     for each in splitted_context.keys():
