@@ -267,8 +267,8 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
     min_length_coincidence = int(len(context) * 0.75) #Only allow one asterisc per four contenxt elements
     ctxt_msa = ctxt_msa.dropna(thresh = min_length_coincidence)
     column_nas = [len(ctxt_msa) - ctxt_msa[col].count() for col in ctxt_msa.columns]
-    if any(excesive_na > len(ctxt_msa) * 0.5 for excesive_na in column_nas):
-        ctxt_msa = [] # If any column isn't well represented (more than the half reads contain NAs), remove the matrix to make sure that the mutation is discarded afterwards
+    if any(excesive_na > len(ctxt_msa) * 0.5 for excesive_na in column_nas) and len(ctxt_msa.dropna(thresh = min_length_coincidence)) < 3:
+        ctxt_msa = [] # If the context isn't perfect in at least 3 reads and any column isn't well represented (more than the half reads contain NAs), remove the matrix to make sure that the mutation is discarded afterwards
     else:
         pass
     #Count mut reads with the context
