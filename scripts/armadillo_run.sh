@@ -23,7 +23,7 @@ fi
 ref_genome=${armadillo_data}'/armadillo_reference_genome.fa'
 blat_coords=${armadillo_data}'/rois_copies_coords'
 miniFasta_dir=${armadillo_data}'/miniFASTA'
-repeatmasker_candidates_filter=${scripts_dir}'/repeatmasker_candidates_filter.py'
+remove_dups=${scripts_dir}'/remove_dups.py'
 mq2vcf_TDvsND=${scripts_dir}'/mq2vcf_TDvsND.py'
 
 if [ "$print" = 'true' ]
@@ -58,7 +58,6 @@ then
 
 		##Run pipeline##
         echo " Final command:\n armadillo run --name ${name} --root_dir $root_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --repeatsDB $repeatsDB --scripts_dir $scripts_dir --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_max $control_max --tumor_threshold $tumor_threshold --base_quality $base_quality --control_qual $control_qual --mapq $mapq --read_length $read_length --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
-
         echo " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Repeats database: $repeatsDB   \n  Scripts directory: $scripts_dir   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_max   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Control base quality threshold: $control_qual   \n  Mapping quality threshold: $mapq   \n  Read length: $read_length   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 
 	else
@@ -88,12 +87,14 @@ then
 		extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
 		wait
 	fi
-	rm -rf *_tmp_files
+	#rm -rf *_tmp_files
 
 else
 	if [ -d ${name} ]
 	then
 		cd $name
+        echo " Final command:\n armadillo run --name ${name} --root_dir $root_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --repeatsDB $repeatsDB --scripts_dir $scripts_dir --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_max $control_max --tumor_threshold $tumor_threshold --base_quality $base_quality --control_qual $control_qual --mapq $mapq --read_length $read_length --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
+        echo " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $root_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Repeats database: $repeatsDB   \n  Scripts directory: $scripts_dir   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_max   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Control base quality threshold: $control_qual   \n  Mapping quality threshold: $mapq   \n  Read length: $read_length   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
 		echo "$name doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
@@ -115,8 +116,8 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${control_qual} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} | python3 ${repeatmasker_candidates_filter} $repeatsDB 20 100 > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
-
+samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${control_qual} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
+cat ${name}_candidates.vcf | python3 ${remove_dups} 100 > ${name}_nodupscandidates.vcf
 lines=$(wc -l ${name}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]
 then

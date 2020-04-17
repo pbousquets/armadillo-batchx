@@ -156,6 +156,16 @@ parse_arguments(){
 	done
 }
 
+evaluate(){
+	file=$1
+	tag="$2 $3"
+	if [ ! -f $file ]
+	then
+		echo "${tag} ERROR:\nThe file couldn't be found. Please, check if the path was correctly introduced: $file \n"
+		exit 0
+	fi
+}
+
 extract_minibam(){
 	time=$(date +%x%t%X)
 	echo ${time}: Generating ${2} minibams... | tee -a pipeline.log
@@ -165,7 +175,7 @@ extract_minibam(){
 	blat_coords=$4 #Dir of blat coords of each exon
 	miniFasta_dir=$5
 	rois_list=$6 #List of regions of interest
-	threads=$7
+	half_threads=$7
 	#list of regions
 	lines=$(ls $blat_coords | wc -l )
 
@@ -182,7 +192,7 @@ extract_minibam(){
 			PU=${sample}
 			RG="@RG\\tID:${sample}\\tSM:${SM}\\tPL:${PL}\\tLB:${LB}\\tPU:${PU}"
 			allCoords=$(cat ${blat_coords}/${file}) #Save its coords
-			samtools view -u -G 0x400 -G 0x4 ${sample} $allCoords | samtools fastq -N - 2>/dev/null|  bwa mem -t ${threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > ${type}_tmp_files/${file}.bam
+			samtools view -u -f 1 -F 3072 -G 0x400 -G 0x4 ${sample} $allCoords | samtools fastq -N - 2>/dev/null|  bwa mem -t ${half_threads} -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > ${type}_tmp_files/${file}.bam
 			printf "\r Initial time: ${time}. Files left: $lines        "
 		else
 			echo "~" ${blat_coords}/${file} does not exist. Make sure it was in the armadillo data-prep list >> pipeline.log
@@ -203,26 +213,17 @@ extract_minibam(){
 
 	if [ ${iter} -gt 1 ]
 	then
-		samtools merge - tmp_*.bam | samtools sort -@ threads -m 6000000000 -o ../${name}${type}_merged.bam -
+		samtools merge - tmp_*.bam | samtools sort -@ ${half_threads} -m 6000000000 -o ../${name}${type}_merged.bam -
 		rm tmp_*.bam
 	else
-		samtools sort -@ ${threads} -m 6000000000 -o ../${name}${type}_merged.bam tmp_1.bam
+		samtools sort -@ ${half_threads} -m 6000000000 -o ../${name}${type}_merged.bam tmp_1.bam
 		rm tmp_1.bam
 	fi
 	cd ../
+	rm -d ${type}_tmp_files
 	samtools index ${name}${type}_merged.bam
-
 
 	time=$(date +%x%t%X)
 	echo ${time}: Bam generation successful "\n"| tee -a pipeline.log
 	}
 
-evaluate(){
-	file=$1
-	tag="$2 $3"
-	if [ ! -f $file ]
-	then
-		echo "${tag} ERROR:\nThe file couldn't be found. Please, check if the path was correctly introduced: $file \n"
-		exit 0
-	fi
-}

@@ -1,6 +1,6 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
-installation_path=''
+installation_path=/home/pbousquets/scripts/armadillo/
 armadillo_data="${installation_path}'lib/armadillo_data/" ##Output dir of prepare_data script ##
 name='' ## sample name ##
 root_dir='' ## Parent directory of the genomes ##
@@ -12,14 +12,14 @@ repeatsDB=${installation_path}/'lib/hg19_repeatmasker_DB_sorted.bed.gz' ## Repea
 ## THRESHOLDS AND PARAMETERS ##
 control_max=3 ## Max. variant reads allowed in the control. If two high, SNPs may appear. ##
 control_qual=0 ## Base quality to consider control variants. The lower it is, the more restrictive later ##
+base_quality=30 ## Minimum base quality ##
 tumor_coverage=30 ##Sequencing coverage of the tumor sample##
 control_coverage=30 ##Sequencing coverage of the control sample##
 GCcutoff=80 ## Max. %GC allowed in reads ##
-mapq=40 ## Minimum mapq after realignment ##
+mapq=30 ## Minimum mapq after realignment ##
 port='9006' ## Port previously opened for gfClient (Blat) ##
 print='TRUE' ## Print a log file of discarded candidates ##
 read_length=151 ## Read length (bp) ##
 skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters. ##
 threads=3 ## Threads ##
 tumor_threshold=4 ## Minimum reads in a variant ##
-base_quality=30 ## Minimum base quality ##

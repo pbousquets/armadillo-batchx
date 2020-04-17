@@ -15,6 +15,9 @@ def parse_args():
 	'-i', '--rois', type = str, required = True,
 	help = 'Input file with regions of interest (BED-formatted)')
 	parser.add_argument(
+	'-m', '--mlen', type = int, default = 100, required = False,
+	help = 'Minimum length (bp) allowed to each gene (default: %(default)s).')
+	parser.add_argument(
 	'-p', '--port', type = str, required = True,
 	help = 'Port where gfServer was loaded')
 	parser.add_argument(
@@ -91,7 +94,12 @@ for line in rois:
 		chrom, start, end = col[0:3]
 	except ValueError:
 		sys.exit("Input error: expected a BED file or a chr:start-end formatted file")
+
 	coord = str(chrom) + ":" + str(int(start) - 100) + "-" + str(int(end) + 100) #We add +100 bp to be sure that all reads align, even in those in the ends of the exons
+	
+	if int(end) - int(start) < args.mlen: #Remove too short genes
+		continue
+
 	if "miniFASTA/"+coord+".fa" not in os.listdir("miniFASTA"): #Do not analyse those that already exist
 		orig_coord = str(chrom) + ":" + str(start) + "-" + str(end)
 		blat_input = ">"+orig_coord + "\n" + href[chrom][int(start)-1:int(end)].seq #Get the sequence of the region to run blat. We substract 1 because 0 is the start reference for pyfasta
