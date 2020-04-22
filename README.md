@@ -1,6 +1,6 @@
 # Armadillo
 
-Mutations in repetitive regions are usually lost when analysing NGS data, as the alignment of repetitive regions are seldom trustful. Therefore, Armadillo is a pipeline designed to realign specifically those regions and recover mutations that were invisible for regular variant callers.
+Mutations in repetitive regions are usually lost by standard variant callers as low mapping quality leads to non-reliable variant calls. We introduce Armadillo, a pipeline that, by accepting to lose the exact position of mutations in the genome, allows us to find mutations in repetitive genes.
 
 ## Getting Started
 
