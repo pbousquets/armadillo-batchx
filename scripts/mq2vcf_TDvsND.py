@@ -198,6 +198,7 @@ def pileup_to_msa(pileup):
 
         lines +=1
         columns.append(str(pos))
+        
     ## Get the msa ##
     msa = pd.DataFrame(msa_dict).T
     msa.columns = columns

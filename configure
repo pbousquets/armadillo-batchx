@@ -19,7 +19,7 @@ do
 done
 
 echo Checking python dependencies...
-for module in argparse gzip multiprocessing os pyfaidx re sys statistics subprocess tabix
+for module in argparse multiprocessing os pyfaidx re sys statistics subprocess tabix pysam numpy pandas scipy
 do
 	echo -ne "\t - ${module}... "
 	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader('"'$module'"') else 0)') -eq 1 ]] && echo -e OK || pip3 install ${module}
@@ -34,8 +34,7 @@ sed -i -e "3s:.*:${installation_path}:g" $(dirname $0)/configuration_file.txt
 if [ "$EUID" -ne 0 ] && ! grep -q armadillo ~/.bashrc ## If not sudo, create a user-specific alias ##
 then
 	echo "
-#alias to armadillo
-alias armadillo='$(realpath $(dirname $0))/armadillo'" >> ~/.bashrc
+alias armadillo='$(realpath $(dirname $0))/armadillo'" >> ~/.bashrc #alias to armadillo
 elif [ "$EUID" -ne 0 ] && grep -q armadillo ~/.bashrc ## Refresh the alias ##
 then
 	new_alias="alias armadillo='$(realpath $(dirname $0))/armadillo'"

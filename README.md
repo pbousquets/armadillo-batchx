@@ -13,7 +13,8 @@ gfServer (>= v.35)
 python3 (>= v.3.7)
 samtools (>= v.1.9)
 
-The next python packages are also required: argparse, gzip, multiprocessing, os, pyfaidx, re, sys, statistics and subprocess packages. If any of them is missing, it'll be automatically installed when configuring armadillo.
+The next python packages are also required: 
+argparse, multiprocessing, numpy, pandas, pyfaidx, pysam, re, scipy, statistics, subprocess, sys, tabix and os. If any of them is missing, it'll be automatically installed when configuring armadillo.
 ```
 
 ### Installing
@@ -29,7 +30,7 @@ Check that the dependencies are installed:
 ```
 cd armadillo
 
-./configure #run it as sudo to install the python packages globally
+./configure #run it as sudo to install the python packages and creating an alias globally 
 ```
 
 ## Getting armadillo ready
@@ -78,6 +79,6 @@ COMPLETAR OUTPUT Y VARIABLES
 
 ## Authors
 
-* **Pablo Bousquets-Muñoz**
+* **Pablo Bousquets-Muñoz** - bousquetspablo@uniovi.es
 * **Ander Díaz-Navarro**
 * **Xose Antón Suárez-Puente**

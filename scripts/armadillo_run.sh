@@ -25,6 +25,7 @@ blat_coords=${armadillo_data}'/rois_copies_coords'
 miniFasta_dir=${armadillo_data}'/miniFASTA'
 remove_dups=${scripts_dir}'/remove_dups.py'
 mq2vcf_TDvsND=${scripts_dir}'/mq2vcf_TDvsND.py'
+extract_minibam=${scripts_dir}'/extract_minibam.sh'
 
 if [ "$print" = 'true' ]
 then
@@ -76,19 +77,10 @@ then
 		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."
 		exit 0
 	fi
-	##Minibam extraction step##
-	if [ $threads -eq 1 ]
-	then
-		extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-		extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-	else
-		half_threads=$((threads/2))
-		extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads} &
-		extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${half_threads}
-		wait
-	fi
-	#rm -rf *_tmp_files
 
+	bash $extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	bash $extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	
 else
 	if [ -d ${name} ]
 	then
