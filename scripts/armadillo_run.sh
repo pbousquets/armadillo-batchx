@@ -77,9 +77,13 @@ then
 		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."
 		exit 0
 	fi
+	
+	#Check if the reference genome had chr substring
+	chr_tumor=$(check_chr ${TD}) 
+	chr_control=$(check_chr ${ND}) 
 
-	bash $extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
-	bash $extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads}
+	bash $extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_tumor}
+	bash $extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_control}
 	
 else
 	if [ -d ${name} ]
@@ -108,7 +112,7 @@ then
 fi
 
 ##Filter step##
-samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${control_qual} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
+samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_max} -rl ${read_length} -gc ${GCcutoff} -q ${control_qual} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} 2>> pipeline.log > ${name}_candidates.vcf #The 20 specifies the max percentage of reads of a mutation that can appear in more mutations. The 100 is the length of the flanking regions added during the data preparation. By default is 100.
 cat ${name}_candidates.vcf | python3 ${remove_dups} 100 > ${name}_nodupscandidates.vcf
 lines=$(wc -l ${name}_candidates.vcf | awk '{print $1}')
 if [ $lines -eq 3 ]

@@ -310,7 +310,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
     #Check if there's strand bias
     posteriors_strand = bayes_strand.strand_bias(full_mut_msa, full_ctxt_msa)
     
-    return (ctxt_length, len(full_mut_msa), posteriors_strand)
+    return (ctxt_length, full_mut_msa.index.tolist(), posteriors_strand)
 
 def analyse_context(chrom, mut_pos, mut_base, fasta, tumor_bam, control_bam):
     ## Extract the pileup ##    
@@ -325,7 +325,7 @@ def analyse_context(chrom, mut_pos, mut_base, fasta, tumor_bam, control_bam):
     context, bad_positions, seq_errors, context_frq = extract_context(td_msa, mut_pos, mut_base)
     
     if bad_positions > 0.1 * len(context): #If greater, we'll discard de variant. Make all returning variables null
-        tumor_non_mut_context_length, tumor_mut_reads, control_mut_reads, control_non_mut_context_length, posteriors_strand_tumor, posteriors_strand_control = 0, 0, 0, 0, (0,0), (0,0)
+        tumor_non_mut_context_length, tumor_mut_reads, control_mut_reads, control_non_mut_context_length, posteriors_strand_tumor, posteriors_strand_control = 0, [], [], 0, (0,0), (0,0)
     else:    # Find the context in the control sample and in unmutated tumoral reads
         tumor_non_mut_context_length, tumor_mut_reads, posteriors_strand_tumor = find_non_mutant_context(td_msa, context, mut_pos, mut_base)
         control_non_mut_context_length, control_mut_reads, posteriors_strand_control = find_non_mutant_context(nd_msa, context, mut_pos, mut_base)
@@ -466,9 +466,11 @@ def main_function(line):
         control_bam = pysam.AlignmentFile(args.control_bam, "rb" )
         mut_base = element[1]
         tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise, posteriors_strand_tumor = analyse_context(chrom, pos, mut_base, fasta, tumor_bam, control_bam)
-        pp = bayes_strand.contingency_bayes(tumor_mut_reads, tumor_non_mut_context_length, control_mut_reads, control_non_mut_context_length, 10000, "greater")
+        tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
+
+        pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
         rbias, fbias = posteriors_strand_tumor
-        if tumor_mut_reads < args.tumor_threshold:
+        if tumor_mut_reads_len < args.tumor_threshold:
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "not_enough_reads")
@@ -476,7 +478,7 @@ def main_function(line):
             else:
                 continue
         
-        if control_mut_reads > args.control_max:
+        if control_mut_reads_len > args.control_max:
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "germline_change")
@@ -484,7 +486,7 @@ def main_function(line):
             else:
                 continue
 
-        if context_length != 0 and (tumor_non_mut_context_length + tumor_mut_reads < args.tumor_coverage * 0.75 or control_non_mut_context_length + control_mut_reads < args.control_coverage * 0.75):
+        if context_length != 0 and (tumor_non_mut_context_length + tumor_mut_reads_len < args.tumor_coverage * 0.4 or control_non_mut_context_length + control_mut_reads_len < args.control_coverage * 0.75):
             if args.full: #Remove the mutation if the context only exists in the mutant reads
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
                 print_log(string, "low_context_coverage")
@@ -494,14 +496,14 @@ def main_function(line):
         else:
             pass
         
-        if any(posterior > 0.9 for posterior in posteriors_strand_tumor) or pp < 0.98:
+        if pp < 0.95:
             status = "FAIL"
         else:
             status = "PASS"
 
-        characteristics = [pp, tumor_mut_reads, tumor_non_mut_context_length, coverage_td, control_mut_reads, control_non_mut_context_length, coverage_nd, rbias, fbias, nbadreads, seq_errors, mean_noise, stdev_noise]
+        characteristics = [pp, tumor_mut_reads_len, tumor_non_mut_context_length, coverage_td, control_mut_reads_len, control_non_mut_context_length, coverage_nd, rbias, fbias, nbadreads, seq_errors, mean_noise, stdev_noise]
         characteristics = list(map(str, characteristics))
-        print_list = [str(chrom), str(pos), args.name, element[0], element[1], status, ','.join(characteristics), ','.join(reads_left)]
+        print_list = [str(chrom), str(pos), args.name, element[0], element[1], status, ','.join(characteristics), ','.join(tumor_mut_reads)]
         return print_list
 
 if __name__ == '__main__':

@@ -1,5 +1,11 @@
 # Armadillo
 
+<style>
+body {
+text-align: justify}
+</style>
+
+
 Mutations in repetitive regions are usually lost by standard variant callers as low mapping quality leads to non-reliable variant calls. We introduce Armadillo, a pipeline that, by accepting to lose the exact position of mutations in the genome, allows us to find mutations in repetitive genes.
 
 ## Getting Started
@@ -68,14 +74,31 @@ When analysing the ROIs during the "data-prep" step, the gfServer must used a po
 
 ### Output
 
-COMPLETAR OUTPUT Y VARIABLES
+The program will output multiple files. We'll have two minibams that are generated in the first step of the pipeline. **Important note on these bams**: in order to make bwa align the reads in the same region, the reference given to bwa was a small fasta for the region of interest (for example, a gene). All reads from any copy of that gene were aligned against that reference. Finally, all minibams for each region of interest were merged into one single bam.
+
+Also, we'll find two VCF files. The main one is \*\_nodupscandidates.vcf as here we remove duplicated hits. If gene A and B are identical and we analyse both, \*\_candidates.vcf should report the mutation in both regions. In \*\_nodupscandidates.vcf only one of them is reported.
+
+The characteristics field in the VCF prints the next variables:
+- Somatic posterior probability. Bayesian probability of the tumor's mutation VAF being greater than control's. A 0.95 cutoff is set by default to consider a variant as a somatic mutation.
+- Number of mutant reads in the tumor sample
+- Tumor's coverage of mutation-phased WT reads
+- Total coverage in tumor
+- Number of mutant reads in the control sample
+- Control's coverage of mutation-phased WT reads
+- Total coverage in control
+- Reverse strand posterior probability. Bayesian probability of mutant reverse reads being greater than forward.
+- Forward strand posterior probability. Bayesian probability of mutant forward reads being greater than reverse.
+- Discarded reads. Amount of mutant reads discarded along the analysis. If too high, maybe the variant is not reliable.
+- Mutant reads that didn't match the phasing due to sequence errors.
+- Average noise. Average variants per position along mutant region. If high, the region may not be reliable.
+- Noise standard deviation.
 
 ## Built with:
 
-* [BWA](http://bio-bwa.sourceforge.net/) - Genome aligner
-* [gfClient](https://genome.ucsc.edu/goldenPath/help/blatSpec.html#gfClientUsage) - Blat
-* [Python3](https://www.python.org) - Data filtering
-* [Samtools](http://www.htslib.org/doc/samtools.html) - Bam files' management
+* [BWA](http://bio-bwa.sourceforge.net/)
+* [Samtools](http://www.htslib.org/doc/samtools.html)
+* [gfClient](https://genome.ucsc.edu/goldenPath/help/blatSpec.html#gfClientUsage)
+* [Python3](https://www.python.org) 
 
 ## Authors
 

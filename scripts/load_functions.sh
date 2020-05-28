@@ -167,10 +167,14 @@ evaluate(){
 	fi
 }
 
-queue_threads(){
-	subp=$(($(ps --no-headers -o pid --ppid=$1 |wc -w)-1))
-	if [ "${subp}" -gt "${2}" ]
-	then
-		wait -n
+check_chr(){
+	bam=$1
+	chr_names="$(samtools view -H $bam | grep SN:chr | wc -l)"
+    if [ "$chr_names" -gt 0 ]
+	then 
+		echo True
+	else
+		echo False
 	fi
+
 }
