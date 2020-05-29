@@ -276,13 +276,14 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         splitted_context = dict()
         for each in context:
             pos, nucleotide = each.split("_")
-            splitted_context[pos] = nucleotide
+            if str(each) in msa.index:
+                splitted_context[pos] = nucleotide
 
         #Filter the matrix and keep non mutated reads that map at the mut position
         filtered_msa = msa[(msa[str(mut_pos)] != mut_base) & (msa[str(mut_pos)] != "*")] #Don't count the mutant reads. We want to know if context exist apart from the mutation. Also remove those that don't reach the mutation
         for each in splitted_context.keys():
             filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
-    
+                
         #Remove reads that contain too many asteriscs
         ctxt_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
         min_length_coincidence = int(len(context) * 0.75) #Only allow one asterisc per four context elements
@@ -299,7 +300,8 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         #Count mut reads with the context
         filtered_msa = msa[(msa[str(mut_pos)] == mut_base)] 
         for each in splitted_context.keys():
-            filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
+            if str(each) in filtered_msa.index:
+                filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
         
         #Remove reads that contain too many asteriscs
         mut_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
