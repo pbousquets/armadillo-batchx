@@ -3,14 +3,15 @@
 This script filters duplicate mutations in Armadillo and discards those who are located in the flanking regions
 of our regions of interest, as coverage issues may lead to FP.
 """
+
 from sys import argv, stdin
 flank_length = int(argv[1])
 
 reads_dict = dict()
-header = ['#CHROM','POS','ID','REF','ALT', 'QUAL', 'CHARACTERISTICS', "READS", "\n"]
 
 def rm_dups(line):
-	chrom, pos, ID, REF, ALT, status, characteristics, read_name = line.split()
+	chrom, pos, ID, REF, ALT, qual, filter, info, format, tumor, control = line.split()
+
 	start = int(chrom.split(":")[1].split("-")[0])
 	end = int(chrom.split(":")[1].split("-")[1])
 	length = end - start
@@ -30,13 +31,16 @@ def rm_dups(line):
 
 for line in stdin:
 	line=line.strip()
-	if line.startswith("#"):
-		print('##fileformat=VCFv4.2', '##Command=python3 %s' % (' '.join(argv)), line, '\t'.join(header), sep = '\n', end = '')
+	if line.startswith("#CHROM"):
+		print('##Command=python3 %s' % (' '.join(argv)))
+		print(line)
 		continue
+	elif line.startswith("##"):
+		print(line)
 	else:
-		pass 
-	if len(line.split()) == 8:
+		pass
+	if len(line.split()) == 11:
 		rm_dups(line)
-	elif len(line.split()) == 16: #It should happen any longer, but I found causes in the past two lines printed at the same line, so if this happened, we split them
-		rm_dups("\t".join(line.split()[0:7]))
-		rm_dups("\t".join(line.split()[7:]))
+	elif len(line.split()) == 22: 
+		rm_dups("\t".join(line.split()[0:10]))
+		rm_dups("\t".join(line.split()[10:]))

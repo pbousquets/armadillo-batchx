@@ -24,7 +24,7 @@ def parse_args():
     help = 'Tumor genome coverage')
     parser.add_argument(
     '-f', '--full', action = 'store_true', default = True,
-    help = 'Print all variants to follow how each is filtered in each step. No arguments required. (default: NULL)')
+    help = 'Print log with discarded variants and add a mutant readname column.')
     parser.add_argument(
     '-i', '--input', type = str, required = False, default = '-', metavar = 'FILE',
     help = 'MQ file to convert')
@@ -41,8 +41,11 @@ def parse_args():
     '-p', '--port', type = str, required = False, default = '9001',
     help = 'Port for performing blat analysis (default: %(default)s)')
     parser.add_argument(
-    '-q', '--base_quality', type = int, required = False, default = 30,
+    '-Q', '--base_quality', type = int, required = False, default = 30,
     help = 'Filter by base quality value (default: %(default)s)')
+    parser.add_argument(
+    '-q', '--mapq', type = int, required = False, default = 30,
+    help = 'Filter by mapping quality (default: %(default)s)')    
     parser.add_argument(
     '-r', '--reference_fasta', type = str, required = True,
     help = 'Reference fasta file')
@@ -121,7 +124,7 @@ def GC_filt(sequence):
     GC = GC/len(sequence)*100
     return GC
 
-def samt_view(bamdir, coord, reads): # Samtools: get reads' sequences
+def view2fasta(bamdir, coord, reads): # Samtools: get reads' sequences
     samtools_command = ['samtools', 'view', bamdir, coord ]
     fastareads = ''
     result = check_output(samtools_command).decode().splitlines()
@@ -316,8 +319,8 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
 
 def analyse_context(chrom, mut_pos, mut_base, fasta, tumor_bam, control_bam):
     ## Extract the pileup ##    
-    tumor_mq = get_pileup(tumor_bam, chrom, mut_pos, fasta, 30, 30)
-    control_mq = get_pileup(control_bam, chrom, mut_pos, fasta, 20, 20) #To make it harder
+    tumor_mq = get_pileup(tumor_bam, chrom, mut_pos, fasta, args.mapq, args.base_quality)
+    control_mq = get_pileup(control_bam, chrom, mut_pos, fasta, args.mapq -10, args.base_quality -10)
     
     ## Convert the pileup into a msa ##
     td_msa, mean_noise, stdev_noise = pileup_to_msa(tumor_mq)
@@ -443,9 +446,9 @@ def main_function(line):
         else:
             pass
 
-        ##Launch polyfilter
+        ##Launch blat
         coord = chrom+":"+str(pos)+"-"+str(pos)
-        reads_fasta = samt_view(args.tumor_bam, coord, real_reads_td)
+        reads_fasta = view2fasta(args.tumor_bam, coord, real_reads_td)
 
         if len(reads_fasta) == 0: #If no reads left, stop
             continue
@@ -462,6 +465,7 @@ def main_function(line):
                 continue
         else:
             pass
+
         ##Phase the variants to check if all the reads containing the mutation come from the same region
         fasta = pysam.FastaFile(args.reference_fasta)
         tumor_bam = pysam.AlignmentFile(args.tumor_bam, "rb" )
@@ -469,9 +473,10 @@ def main_function(line):
         mut_base = element[1]
         tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise, posteriors_strand_tumor = analyse_context(chrom, pos, mut_base, fasta, tumor_bam, control_bam)
         tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
-
+        
         pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
         rbias, fbias = posteriors_strand_tumor
+
         if tumor_mut_reads_len < args.tumor_threshold:
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
@@ -499,13 +504,20 @@ def main_function(line):
             pass
         
         if pp < 0.95:
-            status = "FAIL"
+            FILTER = "FAIL"
         else:
-            status = "PASS"
+            FILTER = "PASS"
 
-        characteristics = [pp, tumor_mut_reads_len, tumor_non_mut_context_length, coverage_td, control_mut_reads_len, control_non_mut_context_length, coverage_nd, rbias, fbias, nbadreads, seq_errors, mean_noise, stdev_noise]
-        characteristics = list(map(str, characteristics))
-        print_list = [str(chrom), str(pos), args.name, element[0], element[1], status, ','.join(characteristics), ','.join(tumor_mut_reads)]
+        unf_TD_count = [item.lower() for item in variants_list_td].count(mut_base)
+        unf_ND_count = [item.lower() for item in variants_list_nd].count(mut_base)
+        
+        INFO = ["PP="+str(pp), "FB="+str(fbias), "RB="+str(rbias), "MN="+str(mean_noise), "SN="+str(stdev_noise)]
+        FORMAT = "AD:uAD:CD:DP"
+        TUMOR = [tumor_mut_reads_len, unf_TD_count, tumor_non_mut_context_length, coverage_td]
+        CONTROL = [control_mut_reads_len, unf_ND_count, control_non_mut_context_length, coverage_nd]
+        TUMOR, CONTROL = list(map(str, TUMOR)), list(map(str, CONTROL))
+        
+        print_list = [str(chrom), str(pos), args.name, element[0], mut_base, pp, FILTER, INFO.join(";"), FORMAT, TUMOR.join(":"), CONTROL.join(":")]
         return print_list
 
 if __name__ == '__main__':
@@ -515,7 +527,22 @@ if __name__ == '__main__':
     for arg in sorted(vars(args)):
         arg_list.append('--'+arg)
         arg_list.append(str(getattr(args, arg)))
-    print('##Command = python3 %s %s' % (argv[0], ' '.join(arg_list)))
+
+    print('##fileformat=VCFv4.2',
+    '##FILTER=<ID=PASS,Description="All filters passed">',
+    '##FILTER=<ID=FAILED,Description="Somatic posterior probability < 0.95">',
+    '##FORMAT=<ID=AD,Number=1,Type=Integer,Description="Count of mutant reads">',
+    '##FORMAT=<ID=uAD,Number=1,Type=Integer,Description="Count of unfiltered mutant reads">',
+    '##FORMAT=<ID=CD,Number=1,Type=Integer,Description="Count of non-mutant context reads">',
+    '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Count of total reads">',
+    '##INFO=<ID=PP,Number=1,Type=Float,Description="Somatic mutation posterior probability">',
+    '##INFO=<ID=FB,Number=1,Type=Float,Description="Forward strand bias posterior probability">',
+    '##INFO=<ID=RB,Number=1,Type=Float,Description="Reverse strand bias posterior probability">',
+    '##INFO=<ID=MN,Number=1,Type=Float,Description="Mean alternative allele frequency per position in context">',
+    '##INFO=<ID=NM,Number=1,Type=Float,Description="Standard deviation of alternative allele frequency per position in context">',
+    '##Command = python3 %s %s' % (argv[0], ' '.join(arg_list)),
+    ['#CHROM','POS','ID','REF','ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', args.tumor_bam, args.control_bam].join("\t")
+, sep = "\n",)
 
     ## Using multiprocessing.Pool each task is run in a differente thread with their own variables, and the result is given only when all the task are completed.
     pool = Pool(processes = args.threads)
