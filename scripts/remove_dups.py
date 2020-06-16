@@ -10,16 +10,7 @@ flank_length = int(argv[1])
 reads_dict = dict()
 
 def rm_dups(line):
-	chrom, pos, ID, REF, ALT, qual, filter, info, format, tumor, control = line.split()
-
-	start = int(chrom.split(":")[1].split("-")[0])
-	end = int(chrom.split(":")[1].split("-")[1])
-	length = end - start
-	
-	if flank_length - 5 < int(pos) < length - flank_length + 5: #Remove the flanking extra regions. We leave 5bp because we still can trust those (not to far away) and belong to splicing sites.
-		pass
-	else: 
-		return
+	chrom, pos, ID, REF, ALT, qual, filter, info, format, tumor, control, read_name = line.split()
 
 	reads = set(read_name.split(","))
 	length_reads = len(reads)
@@ -27,7 +18,7 @@ def rm_dups(line):
 		return
 	else:
 		reads_dict[chrom + "_" + pos + "_" + REF + "_" + ALT] = reads
-		print(line)
+		print(chrom, pos, ID, REF, ALT, qual, filter, info, format, tumor, control, sep = "\t")
 
 for line in stdin:
 	line=line.strip()
@@ -37,10 +28,12 @@ for line in stdin:
 		continue
 	elif line.startswith("##"):
 		print(line)
+		continue
 	else:
 		pass
-	if len(line.split()) == 11:
+	
+	if len(line.split()) == 12:
 		rm_dups(line)
-	elif len(line.split()) == 22: 
-		rm_dups("\t".join(line.split()[0:10]))
-		rm_dups("\t".join(line.split()[10:]))
+	elif len(line.split()) == 24: 
+		rm_dups("\t".join(line.split()[0:11]))
+		rm_dups("\t".join(line.split()[11:]))

@@ -50,9 +50,6 @@ def parse_args():
     '-r', '--reference_fasta', type = str, required = True,
     help = 'Reference fasta file')
     parser.add_argument(
-    '-rl', '--read_length', type = int, required = False, default = 151,
-    help = 'Average read length (default: %(default)s)')
-    parser.add_argument(
     '-t', '--threads', type = int, required = False, default = 3,
     help = 'Number of threads to use (default: %(default)s)')
     parser.add_argument(
@@ -475,6 +472,7 @@ def main_function(line):
         tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
         
         pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
+        pp = pp
         rbias, fbias = posteriors_strand_tumor
 
         if tumor_mut_reads_len < args.tumor_threshold:
@@ -517,7 +515,8 @@ def main_function(line):
         CONTROL = [control_mut_reads_len, unf_ND_count, control_non_mut_context_length, coverage_nd]
         TUMOR, CONTROL = list(map(str, TUMOR)), list(map(str, CONTROL))
         
-        print_list = [str(chrom), str(pos), args.name, element[0], mut_base, pp, FILTER, INFO.join(";"), FORMAT, TUMOR.join(":"), CONTROL.join(":")]
+        print_list = [str(chrom), str(pos), args.name, element[0], mut_base, str(pp), FILTER, ";".join(INFO), FORMAT, ":".join(TUMOR), ":".join(CONTROL), ",".join(tumor_mut_reads)]
+
         return print_list
 
 if __name__ == '__main__':
@@ -541,7 +540,7 @@ if __name__ == '__main__':
     '##INFO=<ID=MN,Number=1,Type=Float,Description="Mean alternative allele frequency per position in context">',
     '##INFO=<ID=NM,Number=1,Type=Float,Description="Standard deviation of alternative allele frequency per position in context">',
     '##Command = python3 %s %s' % (argv[0], ' '.join(arg_list)),
-    ['#CHROM','POS','ID','REF','ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', args.tumor_bam, args.control_bam].join("\t")
+    "\t".join(['#CHROM','POS','ID','REF','ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT', args.tumor_bam, args.control_bam])
 , sep = "\n",)
 
     ## Using multiprocessing.Pool each task is run in a differente thread with their own variables, and the result is given only when all the task are completed.

@@ -1,25 +1,21 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
-installation_path=/home/pbousquets/scripts/armadillo/
-armadillo_data="${installation_path}'lib/armadillo_data/" ##Output dir of prepare_data script ##
-name='' ## sample name ##
-root_dir='' ## Parent directory of the genomes ##
+armadillo_data="${installation_path}'lib/armadillo_data/" # Output dir of prepare_data script 
+name='' # sample name 
+bam_dir='' # Parent directory of the genomes 
 control_genome=''
 tumor_genome=''
-rois_list=${installation_path}/'lib/ROIs' ## List of regions on interest (BED-formatted) ##
-repeatsDB=${installation_path}/'lib/hg19_repeatmasker_DB_sorted.bed.gz' ## Repeat annotation database ##
+rois_list=${armadillo_data}/'rois' # List of regions on interest (BED-formatted) 
 
-## THRESHOLDS AND PARAMETERS ##
-control_max=3 ## Max. variant reads allowed in the control. If two high, SNPs may appear. ##
-control_qual=0 ## Base quality to consider control variants. The lower it is, the more restrictive later ##
-base_quality=30 ## Minimum base quality ##
-tumor_coverage=30 ##Sequencing coverage of the tumor sample##
-control_coverage=30 ##Sequencing coverage of the control sample##
-GCcutoff=80 ## Max. %GC allowed in reads ##
-mapq=30 ## Minimum mapq after realignment ##
-port='9006' ## Port previously opened for gfClient (Blat) ##
-print='TRUE' ## Print a log file of discarded candidates ##
-read_length=151 ## Read length (bp) ##
-skip="false" ## Skip the miniBAM alignment. Only use it to reanalyse with new parameters. ##
-threads=3 ## Threads ##
-tumor_threshold=4 ## Minimum reads in a variant ##
+# THRESHOLDS AND PARAMETERS #
+base_quality=30 # Minimum base quality 
+tumor_threshold=4 # Minimum reads in a variant 
+control_threshold=3 # Max. variant reads allowed in the control 
+tumor_coverage=30 #Sequencing coverage of the tumor sample
+control_coverage=30 #Sequencing coverage of the control sample
+GCcutoff=80 # Max. %GC allowed in reads 
+mapq=30 # Minimum mapq after realignment
+port='9006' # Port previously opened for gfClient (Blat) 
+print='TRUE' # Print a log file of discarded candidates 
+skip="false" # Skip the miniBAM alignment. Only use it to reanalyse with new parameters. 
+threads=3 # Threads 

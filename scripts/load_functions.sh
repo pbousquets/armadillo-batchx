@@ -1,7 +1,8 @@
 #!/bin/sh
 #Define functions
+
 generalusage(){
- echo " Program: Armadillo
+ echo " Software: Armadillo
  Version: 1.0
  Contact: Pablo Bousquets (bousquetspablo@uniovi.es)
 
@@ -10,34 +11,28 @@ generalusage(){
    - armadillo data-prep \t\t Create necessary files to run armadillo for a set of ROIs
    - armadillo config-file \t\t Create a configuration file to avoid using arguments in run mode.
 
- XA Lab - 2019"
+ XA Lab - 2020"
 }
 
 usage(){ #Create a function to display the help message
     echo "
     ### ARMADILLO ###
-    To run armadillo, two genomes (tumor and control) are required.
-    Also, remember that this program was writen for hg19 aligned genomes, so the coordinates provided by default files belong to hg19 genome. \n
-    Usage: armadillo run -i ID -C control.bam -T tumor.bam [options] || or || armadillo run configuration_file.txt \n
+
+    Usage: armadillo run [config_file] [options] -i ID -C control.bam -T tumor.bam \n
     Input arguments:
     \t -n,  --name \t \t \t Case or sample name to analyze
-    \t -rd, --root_dir \t \t Root directory where the genomes are stored
+    \t -bd, --bam_dir \t \t Root directory where the genomes are stored
     \t -C,  --control_genome \t \t Control sample genome
     \t -T,  --tumor_genome \t \t Tumour sample genome
-    \t -r,  --rois_list \t \t List of ROIs to analyze  \n
-    Databases options:
-    \t -ad, --armadillo_data \t \t Path to armadillo data-prep command output
-    \t -r,  --repeatsDB \t \t Database of genome repeats
-    \t -s,  --scripts_dir \t \t Directory where this pipeline's scripts are stored \n
-    Analysis parameters:
+    \t -ad, --armadillo_data \t \t Path to armadillo data-prep command output 
+    \t -r,  --rois_list \t \t List of ROIs to analyze [all armadillo_data rois] \n
+    Analysis arguments:
     \t -cc, --control_coverage \t Coverage of control genome [30]
     \t -tc, --tumor_coverage \t \t Coverage of tumor genome [30]
-    \t -cm, --control_max \t \t Maximum variant coverage allowed in the control. [3]
+    \t -cm, --control_threshold \t \t Maximum variant coverage allowed in the control. [3]
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
-    \t -q,  --base_quality \t \t Minimum base quality required to the tumour genome  [30]
-    \t -Q,  --control_qual \t \t Minimum base quality required to the control genome [0]
+    \t -q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
     \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
-    \t -rl, --read_length \t \t Reads length [150]
     \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
@@ -56,26 +51,17 @@ parse_arguments(){
 			-n | --name)
 			name=$VALUE
 			;;
-			-s | --scripts_dir)
-			scripts_dir=$VALUE
-			;;
 			-ad | --armadillo_data)
 			armadillo_data=$VALUE
 			;;
 			-R | --ref_genome)
 			ref_genome=$VALUE
 			;;
-			-r | --repeatsDB)
-			repeatsDB=$VALUE
-			;;
 			-l | --rois_list)
 			rois_list=$VALUE
 			;;
-			-rl | --read_length)
-			read_length=$VALUE
-			;;
-			-rd | --root_dir)
-			root_dir=$VALUE
+			-bd | --bam_dir)
+			bam_dir=$VALUE
 			;;
 			-cc | --control_coverage)
 			control_coverage=$VALUE
@@ -89,8 +75,8 @@ parse_arguments(){
 			-tc | --tumor_coverage)
 			tumor_coverage=$VALUE
 			;;
-			-cm | --control_max)
-			control_max=$VALUE
+			-cm | --control_threshold)
+			control_threshold=$VALUE
 			;;
 			-tt | --tumor_threshold)
 			tumor_threshold=$VALUE
@@ -122,9 +108,6 @@ parse_arguments(){
 			;;
 			-q | --base_quality)
 			base_quality=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-			;;
-			-Q | --control_qual)
-			control_qual=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
 			-tc | --tumor_cutoff)
 			tumor_cutoff=$VALUE
@@ -162,7 +145,7 @@ evaluate(){
 	tag="$2 $3"
 	if [ ! -f $file ]
 	then
-		echo "${tag} ERROR:\nThe file couldn't be found. Please, check if the path was correctly introduced: $file \n"
+		echo "FILE NOT FOUND ERROR:\nThe $2 $3 couldn't be found. Please, check if the path was correctly introduced: $file \n"
 		exit 0
 	fi
 }

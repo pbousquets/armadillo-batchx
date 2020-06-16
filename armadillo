@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+set -Eeuo pipefail
 
-scripts_dir=$(realpath $0)
-scripts_dir=$(dirname $scripts_dir)/scripts
+installation_path=$(realpath $0)
+scripts_dir=$(dirname $installation_path)/scripts
 . ${scripts_dir}/load_functions.sh #Load functions
 . ${scripts_dir}/default_config.txt  # Load default config
 if [ $# = 0 ]
@@ -61,6 +62,7 @@ then
 	    shift
 	done
 	python3 ${scripts_dir}/data_prep.py -m $mlen -o $output -i ${input} -g ${genome} -p ${port}
+	ls ${output}/rois_copies_coords > ${output}/rois
 else
 	echo "Mode error: please use armadillo 'run', 'config-file' or 'data-prep'"
 	generalusage

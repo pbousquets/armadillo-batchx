@@ -6,7 +6,7 @@ install_program(){
 	read answer
 	if [ $(echo $answer | tr '[:upper:]' '[:lower:]') = "yes" ] || [ $(echo $answer | tr '[:upper:]' '[:lower:]') = "y" ]
 	then
-		echo entered
+		echo Installing $1...
 		apt-get install $1
 	fi
 }
