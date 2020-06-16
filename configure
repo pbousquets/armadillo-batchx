@@ -14,7 +14,7 @@ install_program(){
 ## Check if running as sudo ##
 if [ "$EUID" -ne 0 ]
 then
-	sudo="" #local user
+	sudo="" #local 
 else
 	sudo="sudo" #sudo
 fi
