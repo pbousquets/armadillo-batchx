@@ -34,7 +34,7 @@ cd armadillo
 Before we can run armadillo, we need to get a port prepared to run gfClient. In order to do that, we just run:
 
 ```
-gfServer start localhost $PORT /path/to/reference_genome.2bit &
+gfServer start localhost PORT /path/to/reference_genome.2bit &
 ```
 The port will stay opened unless we kill the task or shut the computer down.
 
@@ -42,7 +42,7 @@ The port will stay opened unless we kill the task or shut the computer down.
 The regions of interest must be analysed before running armadillo to keep just those which are repetitive and get the coords of their copies. Armadillo can do that just by providing a reference genome, a BED-formatted list of regions of interest and the port previously opened for gfClient:
 
 ```
-armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome -p port [ -m min_len  -o output_dir ]
+armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome -p PORT [-m min_len] [-o output_dir]
 ```
 
 ## Running armadillo
@@ -56,7 +56,6 @@ armadillo run configuration_file.txt
 Options can be also passed directly through the command line:
 
 ```
-armadillo config-file
 armadillo run -n CASE -C control.bam -T tumor.bam --armadillo_data /path/to/armadillo_data [options]
 ```
 __Important consideration before running armadillo:__
