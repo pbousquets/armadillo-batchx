@@ -12,7 +12,6 @@ Mutations in repetitive regions are usually lost by standard variant callers as 
 * [Python3](https://www.python.org) (v.3.7)
 
 
-
 ### Installing
 
 Use git to download Armadillo:
