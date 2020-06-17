@@ -31,8 +31,8 @@ usage(){ #Create a function to display the help message
     \t -tc, --tumor_coverage \t \t Coverage of tumor genome [30]
     \t -cm, --control_threshold \t Maximum variant coverage allowed in the control. [3]
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
-    \t -q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
-    \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
+    \t -Q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
+    \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
     \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
@@ -81,7 +81,7 @@ parse_arguments(){
 			-tt | --tumor_threshold)
 			tumor_threshold=$VALUE
 			;;
-			-m | --mapq)
+			-q | --mapq)
 			mapq=$VALUE
 			;;
 			-p | --port)
@@ -106,7 +106,7 @@ parse_arguments(){
 			-gc | --GCcutoff)
 			GCcutoff=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
-			-q | --base_quality)
+			-Q | --base_quality)
 			base_quality=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
 			-tc | --tumor_cutoff)
