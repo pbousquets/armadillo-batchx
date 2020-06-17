@@ -45,7 +45,7 @@ The regions of interest must be analysed before running armadillo to keep just t
 armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome -p port [ -m min_len  -o output_dir ]
 ```
 
-### Running armadillo
+## Running armadillo
 
 It's possible to use a configuration file to run armadillo. Just by using config-file option a configuration file will be copied at current working directory. Then, just change any parameter you want and run armadillo.
 
