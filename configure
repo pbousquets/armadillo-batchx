@@ -2,13 +2,8 @@
 ## This script will check the dependencies required for Armadillo ##
 
 install_program(){
-	echo "Do you wish to install $1 (y/n)?"
-	read answer
-	if [ $(echo $answer | tr '[:upper:]' '[:lower:]') = "yes" ] || [ $(echo $answer | tr '[:upper:]' '[:lower:]') = "y" ]
-	then
-		echo "Installing $1..."
-		$2 apt-get install -y $1
-	fi
+	echo "Installing $1..."
+	apt-get install -y $1
 }
 
 ## Check if running as sudo ##
@@ -16,7 +11,7 @@ if [ "$EUID" -ne 0 ]
 then
 	sudo="" #local 
 else
-	sudo="sudo" #sudo
+	sudo="" #sudo
 fi
 
 echo Checking system dependencies...
@@ -32,7 +27,7 @@ echo -ne "\t - pip3..."
 for program in gfClient gfServer
 do
 	echo -ne "\t - ${program}..."
-	if [ "$sudo" == "sudo" ]
+	if [ "$sudo" == "" ]
 	then
 		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget -o /usr/local/bin/$program "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && chmod +x /usr/local/bin/$program; }
 	else
@@ -41,11 +36,14 @@ do
 done
 
 echo Checking python dependencies...
-for module in argparse multiprocessing os pyfaidx re sys statistics subprocess pysam numpy pandas scipy
+for module in argparse multiprocessing os pyfaidx re sys statistics subprocess Cython numpy pandas scipy
 do
 	echo -ne "\t - ${module}... "
-	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader('"'$module'"') else 0)') -eq 1 ]] && echo -e OK || $sudo pip3 install ${module}
+	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader('"'$module'"') else 0)') -eq 1 ]] && echo -e OK || $sudo pip3 install --no-cache-dir ${module}
 done
+
+	echo -ne "\t - pysam... "
+	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader("pysam") else 0)') -eq 1 ]] && echo -e OK || $sudo pip3 install --no-cache-dir pysam==0.15.4
 
 ##Set the installation path##
 installation_path="installation_path=$(dirname $(realpath $0))/"

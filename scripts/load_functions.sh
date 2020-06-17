@@ -2,7 +2,7 @@
 #Define functions
 
 generalusage(){
- echo " Software: Armadillo
+ echo -e " Software: Armadillo
  Version: 1.0
  Contact: Pablo Bousquets (bousquetspablo@uniovi.es)
 
@@ -15,7 +15,7 @@ generalusage(){
 }
 
 usage(){ #Create a function to display the help message
-    echo "
+    echo -e "
     ### ARMADILLO ###
 
     Usage: armadillo run [config_file] [options] -i ID -C control.bam -T tumor.bam \n
@@ -29,7 +29,7 @@ usage(){ #Create a function to display the help message
     Analysis arguments:
     \t -cc, --control_coverage \t Coverage of control genome [30]
     \t -tc, --tumor_coverage \t \t Coverage of tumor genome [30]
-    \t -cm, --control_threshold \t \t Maximum variant coverage allowed in the control. [3]
+    \t -cm, --control_threshold \t Maximum variant coverage allowed in the control. [3]
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
     \t -q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
     \t -m,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
