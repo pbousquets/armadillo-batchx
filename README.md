@@ -57,8 +57,8 @@ armadillo run configuration_file.txt
 Options can be also passed directly through the command line:
 
 ```
-./armadillo config-file
-./armadillo run -n CASE -C control.bam -T tumor.bam --armadillo_data /path/to/armadillo_data [options]
+armadillo config-file
+armadillo run -n CASE -C control.bam -T tumor.bam --armadillo_data /path/to/armadillo_data [options]
 ```
 __Important consideration before running armadillo:__
 
