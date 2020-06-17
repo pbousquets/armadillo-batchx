@@ -2,5 +2,5 @@
 __pycache__/
 .vscode
 Dockerfile
-.Dockerignore
+.dockerignore
 Docker_armadillo
