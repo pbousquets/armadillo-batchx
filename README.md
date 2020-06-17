@@ -35,7 +35,7 @@ cd armadillo
 Before we can run armadillo, we need to get a port prepared to run gfClient. In order to do that, we just run:
 
 ```
-gfServer start localhost 9008 /path/to/reference_genome.2bit &
+gfServer start localhost $PORT /path/to/reference_genome.2bit &
 ```
 The port will stay opened unless we kill the task or shut the computer down.
 
