@@ -32,7 +32,7 @@ usage(){ #Create a function to display the help message
     \t -cm, --control_threshold \t Maximum variant coverage allowed in the control. [3]
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
     \t -Q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
-    \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [40]
+    \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [30]
     \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
