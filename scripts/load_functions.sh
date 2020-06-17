@@ -37,7 +37,7 @@ usage(){ #Create a function to display the help message
     Other:
     \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
-    \t -p,  --port \t \t \t Port used to perform blat analysis [9001]
+    \t -p,  --port \t \t \t Port used to perform blat analysis [9006]
     \t -P,  --print \t \t \t Print the variants lost in each step [FALSE]
     \t -h,  --help \t \t \t Display help message
 "
