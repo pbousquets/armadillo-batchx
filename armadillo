@@ -22,46 +22,7 @@ then
 	cp ${scripts_dir}/default_config.txt $(pwd)/configuration_file.txt #Create a config file
 elif [ "${mode}" = "data-prep" ]
 then
-	if [ $# = 0 ]
-	then
-		python3 ${scripts_dir}/data_prep.py --help
-		exit
-	fi
-	mlen="100"
-	output="armadillo_data"
-	while [ $# != 0 ]; do
-	    PARAM=`echo $1 | awk -F= '{print $1}'`
-	    VALUE=`echo $2 | awk -F= '{print $1}'`
-	    case $PARAM in
-			-g | --genome)
-				genome=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
-				;;
-	        -h | --help)
-	            python3 ${scripts_dir}/data_prep.py --help
-	            exit
-	            ;;
-	    	-i | --input)
-				input=$VALUE
-				;;
-			-m | --mlen)
-				mlen=$VALUE
-				;;
-			-o | --output)
-				output=$VALUE
-				;;
-			-p | --port)
-				port=$VALUE
-				;;
-	        *)
-	            echo "ERROR: unknown parameter \"$PARAM\" \n"
-	            python3 ${scripts_dir}/data_prep.py
-	            exit 1
-	            ;;
-	    esac
-	    shift
-	    shift
-	done
-	python3 ${scripts_dir}/data_prep.py -m $mlen -o $output -i ${input} -g ${genome} -p ${port}
+	python3 ${scripts_dir}/data_prep.py "$@"
 	ls ${output}/rois_copies_coords > ${output}/rois
 else
 	echo "Mode error: please use armadillo 'run', 'config-file' or 'data-prep'"

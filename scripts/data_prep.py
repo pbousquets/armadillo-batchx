@@ -7,22 +7,28 @@ from pyfaidx import Fasta
 from subprocess import check_output
 
 def parse_args():
-	parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest in BED format.')
+	parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest.')
 	parser.add_argument(
 	'-g', '--genome_ref', type = str, required = True,
 	help = 'Reference genome')
 	parser.add_argument(
 	'-i', '--rois', type = str, required = True,
-	help = 'Input file with regions of interest (BED-formatted)')
+	help = 'Input file with regions of interest (BED or chr:st-end formatted)')
+	parser.add_argument(
+	'-I', '--identity', type = int, default = 90, required = False,
+	help = 'Minimum identity for a hit to be considered a copy of the ROI (default: %(default)s).')
+	parser.add_argument(
+	'-L', '--lendiff', type = int, required = False, default = 15,
+	help = 'Maximum length difference allowed between each hit and the input sequence (default: %(default)s%%).')
 	parser.add_argument(
 	'-m', '--mlen', type = int, default = 100, required = False,
 	help = 'Minimum length (bp) allowed to each gene (default: %(default)s).')
 	parser.add_argument(
-	'-p', '--port', type = str, required = True,
-	help = 'Port where gfServer was loaded')
-	parser.add_argument(
 	'-o', '--output', type = str, required = False, default = 'armadillo_data',
 	help = 'Set name. It will be used for output dir (default: %(default)s).')
+	parser.add_argument(
+	'-p', '--port', type = str, required = True,
+	help = 'Port where gfServer was loaded')
 	return parser.parse_args()
 
 def blat_parser(blat, filename):
@@ -34,7 +40,7 @@ def blat_parser(blat, filename):
 		st_end=chr_stend[1].split("-")
 		end=st_end[1].split("_")
 		querylength=int(end[0])-int(st_end[0])
-		if float(column[2])>90 and float(column[3])/querylength*100 >= 85 and float(column[7])/querylength*100 <=115 and float(column[5])<=1: #90% identity, alignment length +/- 2%, gaps 1
+		if float(column[2])>args.identity and float(column[3])/querylength*100 >= 100-args.lendiff and float(column[7])/querylength*100 <=100+args.lendiff and float(column[5])<=1: #90% identity, alignment length +/- 15%, gaps 1
 			print_fasta = True
 			printed += 1
 			log=open("rois_copies_coords/"+filename, "a+") #We'll have a log file where we'll append any useful coordinate, so we don't use it twice
@@ -76,6 +82,7 @@ except FileExistsError:
 	pass
 
 ##READ THE INPUT ##
+print("Performing blat queries to find repetitive regions of interest", file=sys.stderr)
 if ".gz" in input_file:
 	rois = gzip.open(input_file, "rt")
 else:
