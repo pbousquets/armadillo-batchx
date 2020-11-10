@@ -18,7 +18,7 @@ usage(){ #Create a function to display the help message
     echo -e "
     ### ARMADILLO ###
 
-    Usage: armadillo run [config_file] [options] -i ID -C control.bam -T tumor.bam \n
+    Usage: armadillo run [config_file] [options] -N NAME -C control.bam -T tumor.bam \n
     Input arguments:
     \t -N,  --name \t \t \t Case or sample name to analyze
     \t -bd, --bam_dir \t \t Root directory where the genomes are stored

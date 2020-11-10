@@ -23,7 +23,6 @@ then
 elif [ "${mode}" = "data-prep" ]
 then
 	python3 ${scripts_dir}/data_prep.py "$@"
-	ls ${output}/rois_copies_coords > ${output}/rois
 else
 	echo "Mode error: please use armadillo 'run', 'config-file' or 'data-prep'"
 	generalusage

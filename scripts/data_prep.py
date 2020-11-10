@@ -25,7 +25,7 @@ def parse_args():
 	help = 'Minimum length (bp) allowed to each gene (default: %(default)s).')
 	parser.add_argument(
 	'-o', '--output', type = str, required = False, default = 'armadillo_data',
-	help = 'Set name. It will be used for output dir (default: %(default)s).')
+	help = 'Set name for the output directory (default: %(default)s).')
 	parser.add_argument(
 	'-p', '--port', type = str, required = True,
 	help = 'Port where gfServer was loaded')
@@ -150,3 +150,9 @@ for fasta in fastas:
 	else:
 		os.system("bwa index miniFASTA/" + fasta)
 		os.system("samtools faidx miniFASTA/" + fasta)
+
+## Create a list of all final rois
+roisfile = open("rois", "w+")
+for roi in [file for file in os.listdir("rois_copies_coords")]:
+	roisfile.write(roi+"\n")
+roisfile.close()
