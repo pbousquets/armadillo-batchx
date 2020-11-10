@@ -11,11 +11,12 @@ rois_list=''
 base_quality=30 # Minimum base quality 
 tumor_threshold=4 # Minimum reads in a variant 
 control_threshold=3 # Max. variant reads allowed in the control 
-tumor_coverage=30 #Sequencing coverage of the tumor sample
-control_coverage=30 #Sequencing coverage of the control sample
+tumor_coverage=30 # Sequencing coverage of the tumor sample
+control_coverage=30 # Sequencing coverage of the control sample
 GCcutoff=80 # Max. %GC allowed in reads 
 mapq=30 # Minimum mapq after realignment
 
+maxRAM=60 # Gb 
 port='9006' # Port previously opened for gfClient (Blat) 
 print='true' # Print a log file of discarded candidates 
 skip="false" # Skip the miniBAM alignment. Only use it to reanalyse with new parameters. 

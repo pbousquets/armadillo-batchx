@@ -35,6 +35,7 @@ usage(){ #Create a function to display the help message
     \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [30]
     \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
     Other:
+	\t -R,  --maxRam \t \t Maximum RAM allowed (Gb) [60]
     \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
     \t -p,  --port \t \t \t Port used to perform blat analysis [9006]
@@ -99,6 +100,9 @@ parse_arguments(){
 			    exit
 			    ;;
 			esac
+			;;
+			-R | --maxRam)
+			maxRam=$VALUE
 			;;
 			-t | --threads)
 			threads=$VALUE

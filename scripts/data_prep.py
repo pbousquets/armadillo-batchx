@@ -6,6 +6,7 @@ import os
 from pyfaidx import Fasta
 from subprocess import check_output
 
+
 def parse_args():
 	parser = argparse.ArgumentParser(description = 'Prepares the data needed by Armadillo by providing just the coordinates of the regions of interest.')
 	parser.add_argument(

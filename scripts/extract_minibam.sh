@@ -9,6 +9,7 @@ miniFasta_dir=$5
 rois_list=$6 #List of regions of interest
 threads=$7
 chr_bam=$8
+maxRam=$9
 
 lines=$(cat $rois_list | wc -l )
 cat $rois_list | tr ':-' '\t' | while read -r chr st end #Create a tmp minibam for each region
@@ -67,11 +68,11 @@ done
 
 if [ ${iter} -gt 1 ]
 then
-    samtools merge -@ ${threads} - tmp_*.bam | samtools sort -@ ${threads} -m 6000000000 -o ../${name}${type}_merged.bam -
+    samtools merge -@ ${threads} - tmp_*.bam | samtools sort -@ ${threads} -m ${maxRam}00000000 -o ../${name}${type}_merged.bam -
     rm tmp_*.bam
 else
-    samtools sort -@ ${threads} -m 6000000000 -o ../${name}${type}_merged.bam tmp_1.bam
-    rm tmp_1.bam
+    samtools sort -@ ${threads} -m ${maxRam}00000000 -o ../${name}${type}_merged.bam tmp_${iter}.bam
+    rm tmp_${iter}.bam
 fi
 cd ../
 rm -d ${type}_tmp_files

@@ -85,8 +85,8 @@ then
 	chr_tumor=$(check_chr ${TD}) 
 	chr_control=$(check_chr ${ND}) 
 
-	bash $extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_tumor}
-	bash $extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_control}
+	bash $extract_minibam $name ${TD} tumor ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_tumor} ${maxRam}
+	bash $extract_minibam $name ${ND} control ${blat_coords} ${miniFasta_dir} ${rois_list} ${threads} ${chr_control} ${maxRam}
 	
 else
 	if [ -d ${name} ]
