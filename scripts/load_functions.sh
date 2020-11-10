@@ -20,7 +20,7 @@ usage(){ #Create a function to display the help message
 
     Usage: armadillo run [config_file] [options] -i ID -C control.bam -T tumor.bam \n
     Input arguments:
-    \t -n,  --name \t \t \t Case or sample name to analyze
+    \t -N,  --name \t \t \t Case or sample name to analyze
     \t -bd, --bam_dir \t \t Root directory where the genomes are stored
     \t -C,  --control_genome \t \t Control sample genome
     \t -T,  --tumor_genome \t \t Tumour sample genome
@@ -48,7 +48,7 @@ parse_arguments(){
 	    PARAM=`echo $1 | awk -F= '{print $1}'`
 	    VALUE=`echo $2 | awk -F= '{print $1}'`
 	    case $PARAM in
-			-n | --name)
+			-N | --name)
 			name=$VALUE
 			;;
 			-ad | --armadillo_data)
@@ -57,7 +57,7 @@ parse_arguments(){
 			-R | --ref_genome)
 			ref_genome=$VALUE
 			;;
-			-l | --rois_list)
+			-r | --rois_list)
 			rois_list=$VALUE
 			;;
 			-bd | --bam_dir)

@@ -14,6 +14,6 @@ control_coverage=30 #Sequencing coverage of the control sample
 GCcutoff=80 # Max. %GC allowed in reads 
 mapq=30 # Minimum mapq after realignment
 port='9006' # Port previously opened for gfClient (Blat) 
-print='TRUE' # Print a log file of discarded candidates 
+print='true' # Print a log file of discarded candidates 
 skip="false" # Skip the miniBAM alignment. Only use it to reanalyse with new parameters. 
 threads=3 # Threads 

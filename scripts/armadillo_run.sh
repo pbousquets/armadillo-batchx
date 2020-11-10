@@ -32,6 +32,8 @@ extract_minibam=${scripts_dir}'/extract_minibam.sh'
 if [ "$print" = 'true' ]
 then
 	printopt='-f'
+else
+	printopt=''
 fi
 
 ##Check required variables
@@ -59,8 +61,8 @@ then
 		cd ${name}
 
 		##Run pipeline##
-        echo " Final command:\n armadillo run --name ${name} --bam_dir $bam_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_threshold $control_threshold --tumor_threshold $tumor_threshold --base_quality $base_quality --mapq $mapq --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
-        echo " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage   \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
+        echo -e " Final command:\n armadillo run --name ${name} --bam_dir $bam_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_threshold $control_threshold --tumor_threshold $tumor_threshold --base_quality $base_quality --mapq $mapq --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
+        echo -e " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage   \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 
 	else
 		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"
@@ -125,4 +127,4 @@ fi
 END=$(date +%s)
 duration=$((END-STARTTIME))
 time=$(date +%x%t%X)
-echo "${time}: Done! \n$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed." | tee -a pipeline.log
+echo -e "${time}: Done! \n$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed." | tee -a pipeline.log

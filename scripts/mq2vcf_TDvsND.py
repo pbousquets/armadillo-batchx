@@ -276,7 +276,7 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         splitted_context = dict()
         for each in context:
             pos, nucleotide = each.split("_")
-            if str(each) in msa.index:
+            if str(each.split("_")[0]) in list(msa.columns.values):
                 splitted_context[pos] = nucleotide
 
         #Filter the matrix and keep non mutated reads that map at the mut position
@@ -302,16 +302,14 @@ def find_non_mutant_context(msa, context, mut_pos, mut_base):
         for each in splitted_context.keys():
             if str(each) in filtered_msa.index:
                 filtered_msa = filtered_msa[(filtered_msa[str(each)] == splitted_context[each]) | (filtered_msa[str(each)] == '*')]
-        
+
         #Remove reads that contain too many asteriscs
-        mut_msa = filtered_msa[splitted_context.keys()].replace("*", np.nan)
-        mut_msa = mut_msa.dropna(thresh = min_length_coincidence)
+        mut_msa = filtered_msa
         mut_names = mut_msa.index.values.tolist()  
         full_mut_msa = msa.loc[mut_names]
 
     #Check if there's strand bias
     posteriors_strand = bayes_strand.strand_bias(full_mut_msa, full_ctxt_msa)
-    
     return (ctxt_length, full_mut_msa.index.tolist(), posteriors_strand)
 
 def analyse_context(chrom, mut_pos, mut_base, fasta, tumor_bam, control_bam):
@@ -470,7 +468,6 @@ def main_function(line):
         mut_base = element[1]
         tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise, posteriors_strand_tumor = analyse_context(chrom, pos, mut_base, fasta, tumor_bam, control_bam)
         tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
-        
         pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
         pp = pp
         rbias, fbias = posteriors_strand_tumor
@@ -506,8 +503,8 @@ def main_function(line):
         else:
             FILTER = "PASS"
 
-        unf_TD_count = [item.lower() for item in variants_list_td].count(mut_base)
-        unf_ND_count = [item.lower() for item in variants_list_nd].count(mut_base)
+        unf_TD_count = [item.upper() for item in variants_list_td].count(mut_base)
+        unf_ND_count = [item.upper() for item in variants_list_nd].count(mut_base)
         
         INFO = ["PP="+str(pp), "FB="+str(fbias), "RB="+str(rbias), "MN="+str(mean_noise), "SN="+str(stdev_noise)]
         FORMAT = "AD:uAD:CD:DP"
