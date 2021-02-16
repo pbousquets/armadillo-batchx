@@ -34,7 +34,7 @@ cd armadillo
 Before we can run armadillo, we need to get a port prepared to run gfClient. In order to do that, we just run:
 
 ```
-gfServer start localhost PORT /path/to/reference_genome.2bit &
+nohup gfServer start localhost PORT /path/to/reference_genome.2bit >/dev/null 2>&1 &
 ```
 The port will stay opened unless we kill the task or shut the computer down.
 
@@ -60,7 +60,7 @@ armadillo run -n CASE -C control.bam -T tumor.bam --armadillo_data /path/to/arma
 ```
 __Important consideration before running armadillo:__
 
-When analysing the ROIs during the "data-prep" step, the gfServer must used a port with the **same reference genome** used to align the genomes that will be provided later to armadillo. However, when using "armadillo run", gfServer is used just to check if the reads align perfectly anywhere in the genome so we can discard these reads. Thus, **we can use the latest reference genome** in that step, even though if the alignment was performed with a previous reference genome. It will allow us remove false positives associated to regions that actually don't exist in previous versions.
+If using the dockerized version, we recommend adding "--net='host' -v /path/to/genome.2bit:/path/to/genome.2bit". This will allow to properly perform the queries even within the container.
 
 ### Output
 

@@ -3,7 +3,10 @@
 
 install_program(){
 	echo "Installing $1..."
-	apt-get install -y $1
+	if [ "$sudo" == "F" ]
+	then
+		${2}apt-get install -y $1
+	fi
 }
 
 ## Check if running as sudo ##
@@ -11,7 +14,7 @@ if [ "$EUID" -ne 0 ]
 then
 	sudo="" #local 
 else
-	sudo="" #sudo
+	sudo="sudo " #sudo
 fi
 
 echo Checking system dependencies...
@@ -21,29 +24,19 @@ do
 	[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; install_program $program $sudo; }
 done
 
-echo -ne "\t - pip3..."
-[[ $(command -v pip3) ]] && echo -e OK || { echo -e "pip3 needs to be installed."; install_program python3-pip $sudo; } 
 
 for program in gfClient gfServer
 do
 	echo -ne "\t - ${program}..."
 	if [ "$sudo" == "" ]
 	then
-		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget -o /usr/local/bin/$program "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && chmod +x /usr/local/bin/$program; }
+		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && mv $program /usr/local/bin/$program &&  chmod +x /usr/local/bin/$program; }
 	else
-		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget -o ~/.local/bin/$program "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && chmod +x ~/.local/bin/$program; }
+		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && mv $program /usr/bin/$program && chmod +x /usr/bin/$program; }
 	fi
 done
 
-echo Checking python dependencies...
-for module in argparse multiprocessing os pyfaidx re sys statistics subprocess Cython numpy pandas scipy
-do
-	echo -ne "\t - ${module}... "
-	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader('"'$module'"') else 0)') -eq 1 ]] && echo -e OK || $sudo pip3 install --no-cache-dir ${module}
-done
-
-	echo -ne "\t - pysam... "
-	[[ $(python3 -c 'import pkgutil; print(1 if pkgutil.find_loader("pysam") else 0)') -eq 1 ]] && echo -e OK || $sudo pip3 install --no-cache-dir pysam==0.15.4
+pip3 install -r $(dirname $(realpath $0))/requirements.txt
 
 ##Set the installation path##
 installation_path="installation_path=$(dirname $(realpath $0))/"

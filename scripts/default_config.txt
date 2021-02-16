@@ -6,6 +6,7 @@ control_genome=''
 tumor_genome=''
 armadillo_data=''
 rois_list=''
+model=${installation_path}/lib/armNet_epoch80.pth
 
 ## THRESHOLDS AND OTHER PARAMETERS ##
 base_quality=30 # Minimum base quality 

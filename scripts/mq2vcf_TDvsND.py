@@ -3,12 +3,14 @@ from sys import argv, stdin
 from re import findall, match
 from multiprocessing import Pool
 from subprocess import check_output
+from fit import fitArmNet
 import argparse
 import pysam 
 import statistics
 import pandas as pd
 import numpy as np
 import bayes_strand 
+
 
 def parse_args():
     """Parse the input arguments, use '-h' for help"""
@@ -31,6 +33,9 @@ def parse_args():
     parser.add_argument(
     '-gc', '--GCcutoff', type = int, required = False, default = 80, metavar = 'INT',
     help = 'Max GC% per read. (default: %(default)s)')
+    parser.add_argument(
+    '-m', '--model', type = str, required = False, default = 'armadillo/lib/armNet_epoch80.pth',
+    help = 'pretrained CNN model to fit the mutations. (default: %(default)s)')
     parser.add_argument(
     '-n', '--name', type = str, required = False, default = '.',
     help = 'Value for the ID field. (default: %(default)s)')
@@ -147,13 +152,13 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
         except IndexError:
             pass
     reads_left = list(set(allreads) - set(badreads))
-    return(reads_left, len(badreads))
+    return(reads_left)
 
 def polyfilter(fasta): # Blat search
     blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
     result = check_output(blat_command, input = fasta.encode()).decode().strip().split("\n")
-    reads_left,nbadreads = blat_filter(result)
-    return (reads_left, nbadreads)
+    reads_left = blat_filter(result)
+    return (reads_left)
 
 def get_pileup(bam, chr, mutpos, reference_genome, mapq, bq):
     mutpos = int(mutpos)
@@ -176,7 +181,7 @@ def pileup_to_msa(pileup):
         pos, variants, reads = element[0], element[1], element[2]
 
         ## Correct the variants lists and get the indels for the variants list ##
-        corrected_variants, indel_list = correct_variants_list(variants)
+        corrected_variants, _ = correct_variants_list(variants)
         noise.append(len([i for i, x in enumerate(corrected_variants) if x not in [",", "."]]))
 
         ##Create msa##
@@ -450,7 +455,7 @@ def main_function(line):
         else:
             pass
 
-        reads_left,nbadreads = polyfilter(reads_fasta) #Launch blat to remove perfect reads
+        reads_left = polyfilter(reads_fasta) #Launch blat to remove perfect reads
         if len(reads_left) < args.tumor_threshold: #If there are enough reads, go on
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
@@ -461,7 +466,7 @@ def main_function(line):
         else:
             pass
 
-        ##Phase the variants to check if all the reads containing the mutation come from the same region
+        ## Phase the variants to check if all the reads containing the mutation come from the same region
         fasta = pysam.FastaFile(args.reference_fasta)
         tumor_bam = pysam.AlignmentFile(args.tumor_bam, "rb" )
         control_bam = pysam.AlignmentFile(args.control_bam, "rb" )
@@ -469,9 +474,12 @@ def main_function(line):
         tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise, posteriors_strand_tumor = analyse_context(chrom, pos, mut_base, fasta, tumor_bam, control_bam)
         tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
         pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
-        pp = pp
         rbias, fbias = posteriors_strand_tumor
 
+        ## Fit to CNN
+        keep = fitArmNet(chrom, int(pos), alt, args.tumor_bam, args.control_bam, args.fasta, args.model)
+
+        ## Last filters
         if tumor_mut_reads_len < args.tumor_threshold:
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
@@ -498,10 +506,13 @@ def main_function(line):
         else:
             pass
         
+        
         if pp < 0.95:
-            FILTER = "FAIL"
+            FILTER = "GERM"
         else:
             FILTER = "PASS"
+
+        FILTER = "PASS" if keep else "POTENTIAL_ARTIFACT" # Check if the model passed the mutation 
 
         unf_TD_count = [item.upper() for item in variants_list_td].count(mut_base)
         unf_ND_count = [item.upper() for item in variants_list_nd].count(mut_base)
@@ -526,7 +537,8 @@ if __name__ == '__main__':
 
     print('##fileformat=VCFv4.2',
     '##FILTER=<ID=PASS,Description="All filters passed">',
-    '##FILTER=<ID=FAILED,Description="Somatic posterior probability < 0.95">',
+    '##FILTER=<ID=GERM,Description="Somatic posterior probability < 0.95, potential germline event">',
+    '##FILTER=<ID=POTENTIAL_ARTIFACT,Description="Classified as artifact by the model">',
     '##FORMAT=<ID=AD,Number=1,Type=Integer,Description="Count of mutant reads">',
     '##FORMAT=<ID=uAD,Number=1,Type=Integer,Description="Count of unfiltered mutant reads">',
     '##FORMAT=<ID=CD,Number=1,Type=Integer,Description="Count of non-mutant context reads">',

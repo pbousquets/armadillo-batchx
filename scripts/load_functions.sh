@@ -23,24 +23,25 @@ usage(){ #Create a function to display the help message
     \t -N,  --name \t \t \t Case or sample name to analyze
     \t -bd, --bam_dir \t \t Root directory where the genomes are stored
     \t -C,  --control_genome \t \t Control sample genome
-    \t -T,  --tumor_genome \t \t Tumour sample genome
-    \t -ad, --armadillo_data \t \t Path to armadillo data-prep command output 
-    \t -r,  --rois_list \t \t List of ROIs to analyze [all armadillo_data rois] \n
+    \t -T,  --tumor_genome \t \t Tumor sample genome
+    \t -ad, --armadillo_data \t \t Path to armadillo data-prep output 
+    \t -m,  --model \t \t \t Path to pretrained model [${installation_path}/lib/armNet_epoch80.pth]
+    \t -r,  --rois_list \t \t List of ROIs to analyze instead of the whole list in armadillo_data \n
     Analysis arguments:
     \t -cc, --control_coverage \t Coverage of control genome [30]
     \t -tc, --tumor_coverage \t \t Coverage of tumor genome [30]
     \t -cm, --control_threshold \t Maximum variant coverage allowed in the control. [3]
     \t -tt, --tumor_threshold \t Minimum coverage required for a variant to believe it's a good candidate  [6]
-    \t -Q,  --base_quality \t \t Minimum base quality required for the tumour genome  [30]
-    \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed (most of them should be ~60) [30]
-    \t -gc, --GCcutoff \t \t Maximum GC% allowed in the reads  [80] \n
+    \t -Q,  --base_quality \t \t Minimum base quality required for the tumor genome  [30]
+    \t -q,  --mapq \t \t \t Minimum MapQ for reads after being collapsed [30]
+    \t -gc, --GCcutoff \t \t Maximum GC% allowed  [80] \n
     Other:
-	\t -R,  --maxRam \t \t Maximum RAM allowed (Gb) [60]
+	 -R,  --maxRam \t \t \t Maximum RAM allowed (Gb) [60]
     \t -t,  --threads \t \t Threads running in parallel [3]
     \t -S,  --skip \t \t \t Skip bam alignment. Useful to reanalyse a case with other parameters [FALSE]
     \t -p,  --port \t \t \t Port used to perform blat analysis [9006]
     \t -P,  --print \t \t \t Print the variants lost in each step [FALSE]
-    \t -h,  --help \t \t \t Display help message
+    \t -h,  --help \t \t \t Display this help message and exit
 "
 }
 
@@ -69,6 +70,9 @@ parse_arguments(){
 			;;
 			-T | --tumor_genome)
 			tumor_genome=$VALUE
+			;;
+			-m | --model)
+			model=$VALUE
 			;;
 			-C | --control_genome)
 			control_genome=$VALUE

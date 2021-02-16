@@ -92,8 +92,8 @@ else
 	if [ -d ${name} ]
 	then
 		cd $name
-        echo -e " Final command:\n armadillo run --name ${name} --bam_dir $bam_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data --scripts_dir $scripts_dir --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_threshold $control_threshold --tumor_threshold $tumor_threshold --base_quality $base_quality --mapq $mapq --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
-        echo -e " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Scripts directory: $scripts_dir   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
+        echo -e " Final command:\n armadillo run --name ${name} --bam_dir $bam_dir --control_genome $control_genome --tumor_genome $tumor_genome --rois_list $rois_list --armadillo_data $armadillo_data  --control_coverage $control_coverage --tumor_coverage $tumor_coverage --control_threshold $control_threshold --tumor_threshold $tumor_threshold --base_quality $base_quality --mapq $mapq --GCcutoff $GCcutoff --threads $threads --skip $skip --port $port --print $print \n" | tee -a pipeline.log
+        echo -e " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
 		echo "$name doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
@@ -115,7 +115,7 @@ then
 fi
 
 ##Variant calling##
-samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_threshold} -gc ${GCcutoff} -q ${mapq} -Q ${base_quality} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} 2>> pipeline.log > ${name}_candidates.vcf 
+samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_threshold} -gc ${GCcutoff} -m ${model} -q ${mapq} -Q ${base_quality} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} 2>> pipeline.log > ${name}_candidates.vcf 
 cat ${name}_candidates.vcf | python3 ${remove_dups} 100 > ${name}_nodupscandidates.vcf
 lines=$(grep -v ^"#" ${name}_candidates.vcf | wc -l)
 if [ $lines -eq 0 ]

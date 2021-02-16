@@ -1,11 +1,12 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
-armadillo_data="${installation_path}'lib/armadillo_data/" # Output dir of prepare_data script 
+armadillo_data='' # Output dir of armadillo data-prep 
 name='' # sample name 
 bam_dir='' # Parent directory of the genomes 
 control_genome=''
 tumor_genome=''
 rois_list=${armadillo_data}/'rois' # List of regions on interest (BED-formatted) 
+model=${installation_path}/lib/armNet_epoch80.pth
 
 # THRESHOLDS AND PARAMETERS #
 base_quality=30 # Minimum base quality 

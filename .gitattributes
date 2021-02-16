@@ -1,1 +1,2 @@
 *.2bit filter=lfs diff=lfs merge=lfs -text
+lib/*pth filter=lfs diff=lfs merge=lfs -text
