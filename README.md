@@ -6,10 +6,10 @@ Mutations in repetitive regions are usually lost by standard variant callers as 
 
 ### Prerequisites
 
-* [BWA](http://bio-bwa.sourceforge.net/) (v.0.7.17)
-* [Samtools](http://www.htslib.org/doc/samtools.html) (v.1.9)
-* [gfClient](https://genome.ucsc.edu/goldenPath/help/blatSpec.html#gfClientUsage)  (v.35)
-* [Python3](https://www.python.org) (v.3.7)
+* [BWA](http://bio-bwa.sourceforge.net/) (built with v.0.7.17)
+* [Samtools](http://www.htslib.org/doc/samtools.html) (built with v.1.9)
+* [gfClient](https://genome.ucsc.edu/goldenPath/help/blatSpec.html#gfClientUsage)  (built with v.35)
+* [Python3](https://www.python.org) (built with v.3.7)
 
 
 ### Installing
@@ -42,7 +42,7 @@ The port will stay opened unless we kill the task or shut the computer down.
 The regions of interest must be analysed before running armadillo to keep just those which are repetitive and get the coords of their copies. Armadillo can do that just by providing a reference genome, a BED-formatted list of regions of interest and the port previously opened for gfClient:
 
 ```
-armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome -p PORT [-m min_len] [-o output_dir]
+armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome.fa -p PORT [-m min_len] [-o output_dir]
 ```
 
 ## Running armadillo
@@ -58,15 +58,20 @@ Options can be also passed directly through the command line:
 ```
 armadillo run -n CASE -C control.bam -T tumor.bam --armadillo_data /path/to/armadillo_data [options]
 ```
-__Important consideration before running armadillo:__
+__If using the dockerized version:__
 
-If using the dockerized version, we recommend adding "--net='host' -v /path/to/genome.2bit:/path/to/genome.2bit". This will allow to properly perform the queries even within the container.
+We recommend adding "--net='host' -v /path/to/reference_genome.2bit:/path/to/reference_genome.2bit". This will allow to properly perform the queries even within the container. The complete command we recommend is:
+
+```
+docker run --rm -it --net='host' -v /path/to/reference_genome.2bit:/path/to/reference_genome.2bit -v /path/to/genomes:/path/to/genomes -v /home:/path/to/output armadillo [arguments]
+```
 
 ### Output
 
-The program will print multiple files. We'll get two minibams that are generated in the first step of the pipeline. 
-
-Also, we'll find two VCF files. CASE_candidates.vcf is the first one to be printed. It's an intermediate with mutations' readnames, which are then used by remove_dups.py to remove duplications (same mutation appear in multiple similar regions of interest). This will script print the final CASE_nodupscandidates.vcf file.  
+The program will print multiple files:
+- Two minibams. Generated in the first step of the pipeline and used for variant calling. 
+- CASE_candidates.vcf is the first one to be printed. It's an intermediate with mutations' readnames, which are then used by remove_dups.py to remove duplications. 
+- CASE_nodupscandidates.vcf is the final VCF.  
 
 ## Authors
 
