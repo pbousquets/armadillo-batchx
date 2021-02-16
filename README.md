@@ -1,6 +1,6 @@
 # Armadillo
 
-Mutations in repetitive regions are usually lost by standard variant callers as low mapping quality leads to non-reliable variant calls. We introduce Armadillo, a pipeline that, by accepting not to know the exact affected copy, allows us to find mutations in repetitive genes.
+Mutations in repetitive regions are usually lost by standard variant callers as low mapping quality leads to non-reliable variant calls. We introduce Armadillo, a pipeline that stacks all copies from repetitive genes to make mutations in such regions visible. 
 
 ## Getting Started
 
@@ -12,7 +12,7 @@ Mutations in repetitive regions are usually lost by standard variant callers as 
 * [Python3](https://www.python.org) (built with v.3.7)
 
 
-### Installing
+### Installation
 
 Use git to download Armadillo:
 
