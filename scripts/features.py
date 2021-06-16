@@ -13,7 +13,7 @@ class bam_features:
         self.pos = int(pos)
         self.bam = pysam.AlignmentFile(self.bamname, "rb")
         region = f"{chrom}:{pos-23}-{pos+26}"
-        self.refseq = "".join(pysam.faidx(fasta, region).strip().split("\n")[1:]) #Retrieve reference sequence
+        self.refseq = "".join(pysam.faidx(fasta, str(region)).strip().split("\n")[1:]) #Retrieve reference sequence
     
     def get_msa(self, reads, min_pos, max_pos):
         msa_dict = {"seqs": dict(), "quals": dict(), "poss": dict()}

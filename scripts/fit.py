@@ -31,12 +31,13 @@ def fitArmNet(chrom, pos, alt, tumor, control, fasta, model):
     net.load_state_dict(load(model))
     net.eval()
 
-    outputs = net(features).to(device)
+    outputs = net(stack([features.float()])).to(device)
     _, predicted = torch_max(outputs, 1)
 
-    keep = True if predicted.item() == 0 else False
+    keep = True if predicted.item() == 1 else False
+    qual = outputs[0][1] - outputs[0][0]
 
-    return(keep) 
+    return(keep, qual.item()) 
 
 def main():
     args = arguments()

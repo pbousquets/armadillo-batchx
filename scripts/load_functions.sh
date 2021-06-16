@@ -127,7 +127,7 @@ parse_arguments(){
 			    skip=$VALUE
 			    ;;
 			    *)
-			    echo "ERROR: --skip argument possible values are: TRUE or FALSE\n"
+			    echo -e "ERROR: --skip argument possible values are: TRUE or FALSE\n"
 			    usage
 			    exit
 			    ;;
@@ -138,7 +138,7 @@ parse_arguments(){
 			exit
 			;;
 			*)
-			echo "ERROR: unknown parameter \"$PARAM\" \n"
+			echo -e "ERROR: unknown parameter \"$PARAM\" \n"
 			usage
 			exit 1
 			;;
@@ -150,10 +150,12 @@ parse_arguments(){
 
 evaluate(){
 	file=$1
-	tag="$2 $3"
+	shift
+
+	tag="$@"
 	if [ ! -f $file ]
 	then
-		echo "FILE NOT FOUND ERROR:\nThe $2 $3 couldn't be found. Please, check if the path was correctly introduced: $file \n"
+		echo -e "FILE NOT FOUND ERROR:\nThe $tag couldn't be found. Please, check if the path was correctly introduced: $file \n"
 		exit 0
 	fi
 }

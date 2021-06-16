@@ -41,7 +41,7 @@ def blat_parser(blat, filename):
 		st_end=chr_stend[1].split("-")
 		end=st_end[1].split("_")
 		querylength=int(end[0])-int(st_end[0])
-		if float(column[2])>args.identity and float(column[3])/querylength*100 >= 100-args.lendiff and float(column[7])/querylength*100 <=100+args.lendiff and float(column[5])<=1: #90% identity, alignment length +/- 15%, gaps 1
+		if float(column[2])>args.identity and float(column[3])/querylength*100 >= 100-args.lendiff and float(column[7])/querylength*100 <=100+args.lendiff and float(column[5])<=3: #90% identity, alignment length +/- 15%, gaps 1
 			print_fasta = True
 			printed += 1
 			log=open("rois_copies_coords/"+filename, "a+") #We'll have a log file where we'll append any useful coordinate, so we don't use it twice

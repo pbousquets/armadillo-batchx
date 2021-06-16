@@ -348,8 +348,8 @@ def main_function(line):
     st, end = chrom.split(":")[1].split("-")
     if pos < 95 or pos > int(end) - int(st) - 95: # We allow 5 bp because it's still close and maybe we find some splicing mutations
         return
-        
-    ## Filter by minimun control coverage
+    
+    ## Filter by minimum control coverage
     if coverage_nd < args.control_coverage * 0.8 or coverage_td < args.tumor_coverage * 1.5: #If the genome is at 30x, at least we require 45x in each position as it should be repetitive
         if args.full:
             string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+"*"+"\t"+"*"
@@ -399,7 +399,7 @@ def main_function(line):
         pass
 
     real_alts_td, germline_list, overlimit_list = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.control_max)
-    
+       
     ## Annotate alts with frequency over threshold in control sample.
     if args.full:
         for alt in germline_list:
@@ -470,19 +470,16 @@ def main_function(line):
         fasta = pysam.FastaFile(args.reference_fasta)
         tumor_bam = pysam.AlignmentFile(args.tumor_bam, "rb" )
         control_bam = pysam.AlignmentFile(args.control_bam, "rb" )
-        mut_base = element[1]
+        ref_base, mut_base = element[0], element[1]
         tumor_mut_reads, tumor_non_mut_context_length, control_non_mut_context_length, control_mut_reads, context_length, seq_errors, mean_noise, stdev_noise, posteriors_strand_tumor = analyse_context(chrom, pos, mut_base, fasta, tumor_bam, control_bam)
         tumor_mut_reads_len, control_mut_reads_len = len(tumor_mut_reads), len(control_mut_reads)
         pp = bayes_strand.contingency_bayes(tumor_mut_reads_len, tumor_non_mut_context_length, control_mut_reads_len, control_non_mut_context_length, 10000, "greater")
         rbias, fbias = posteriors_strand_tumor
 
-        ## Fit to CNN
-        keep = fitArmNet(chrom, int(pos), alt, args.tumor_bam, args.control_bam, args.fasta, args.model)
-
         ## Last filters
         if tumor_mut_reads_len < args.tumor_threshold:
             if args.full:
-                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+ref_base+"\t"+mut_base
                 print_log(string, "not_enough_reads")
                 continue
             else:
@@ -490,7 +487,7 @@ def main_function(line):
         
         if control_mut_reads_len > args.control_max:
             if args.full:
-                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+ref_base+"\t"+mut_base
                 print_log(string, "germline_change")
                 continue
             else:
@@ -498,7 +495,7 @@ def main_function(line):
 
         if context_length != 0 and (tumor_non_mut_context_length + tumor_mut_reads_len < args.tumor_coverage * 0.4 or control_non_mut_context_length + control_mut_reads_len < args.control_coverage * 0.75):
             if args.full: #Remove the mutation if the context only exists in the mutant reads
-                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]
+                string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+ref_base+"\t"+mut_base
                 print_log(string, "low_context_coverage")
                 continue
             else:
@@ -506,13 +503,15 @@ def main_function(line):
         else:
             pass
         
+        ## Fit to CNN
+        keep, qual = fitArmNet(chrom, int(pos), mut_base, args.tumor_bam, args.control_bam, args.reference_fasta, args.model)
         
         if pp < 0.95:
             FILTER = "GERM"
         else:
             FILTER = "PASS"
 
-        FILTER = "PASS" if keep else "POTENTIAL_ARTIFACT" # Check if the model passed the mutation 
+        FILTER = FILTER if keep else "POTENTIAL_ARTIFACT" # Check if the model passed the mutation 
 
         unf_TD_count = [item.upper() for item in variants_list_td].count(mut_base)
         unf_ND_count = [item.upper() for item in variants_list_nd].count(mut_base)
@@ -523,7 +522,7 @@ def main_function(line):
         CONTROL = [control_mut_reads_len, unf_ND_count, control_non_mut_context_length, coverage_nd]
         TUMOR, CONTROL = list(map(str, TUMOR)), list(map(str, CONTROL))
         
-        print_list = [str(chrom), str(pos), args.name, element[0], mut_base, str(pp), FILTER, ";".join(INFO), FORMAT, ":".join(TUMOR), ":".join(CONTROL), ",".join(tumor_mut_reads)]
+        print_list = [str(chrom), str(pos), args.name, element[0], mut_base, str(qual), FILTER, ";".join(INFO), FORMAT, ":".join(TUMOR), ":".join(CONTROL), ",".join(tumor_mut_reads)]
 
         return print_list
 
