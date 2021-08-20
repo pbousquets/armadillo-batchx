@@ -42,7 +42,7 @@ The port will stay opened unless we kill the task or shut the computer down.
 The regions of interest must be analysed before running armadillo to keep just those which are repetitive and get the coords of their copies. Armadillo can do that just by providing a reference genome, a BED-formatted list of regions of interest and the port previously opened for gfClient:
 
 ```
-armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome.fa -p PORT [-m min_len] [-o output_dir]
+armadillo data-prep -i /path/to/rois.bed -g /path/to/reference_genome.fa -p $PORT [-m min_len] [-o output_dir]
 ```
 
 ## Running armadillo
@@ -69,12 +69,12 @@ docker run --rm -it --net='host' -v /path/to/reference_genome.2bit:/path/to/refe
 ### Output
 
 The program will print multiple files:
-- Two minibams. Generated in the first step of the pipeline and used for variant calling. 
+- The stacked minibams of both tumor and normal samples, generated in the first step of the pipeline and used for variant calling. 
 - CASE_candidates.vcf is the first one to be printed. It's an intermediate with mutations' readnames, which are then used by remove_dups.py to remove duplications. 
-- CASE_nodupscandidates.vcf is the final VCF.  
+- CASE_final.vcf is the final VCF.  
 
 ## Authors
 
-* **Pablo Bousquets-Muñoz** - bousquetspablo@uniovi.es
-* **Ander Díaz-Navarro**
-* **Xose Antón Suárez-Puente**
+* **Pablo Bousquets Muñoz** - bousquetspablo@uniovi.es
+* **Ander Díaz Navarro**
+* **Xose Antón Suárez Puente**

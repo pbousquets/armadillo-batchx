@@ -4,8 +4,8 @@ This script filters duplicate mutations in Armadillo and discards those who are 
 of our regions of interest, as coverage issues may lead to FP.
 """
 
-from sys import argv, stdin
-flank_length = int(argv[1])
+from sys import argv
+flank_length = int(argv[2])
 
 reads_dict = dict()
 
@@ -20,7 +20,7 @@ def rm_dups(line):
 		reads_dict[chrom + "_" + pos + "_" + REF + "_" + ALT] = reads
 		print(chrom, pos, ID, REF, ALT, qual, filter, info, format, tumor, control, sep = "\t")
 
-for line in stdin:
+for line in open(argv[1]):
 	line=line.strip()
 	if line.startswith("#CHROM"):
 		print('##Command=python3 %s' % (' '.join(argv)))

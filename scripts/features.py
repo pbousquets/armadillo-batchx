@@ -115,15 +115,6 @@ def extract_context(msa, ref):
                 context[pos] = [variant] if pos not in context.keys() else context[pos] + [variant]
         i += 1            
         
-    # context_discrepancies = len(msa[pos].tolist()) - msa[pos].isna().sum() - variant_frq 
-    # if variant_frq < 2 and context_discrepancies > 0:
-    #     continue
-
-    # if context_discrepancies < 2:
-    #     context[pos] = variant
-    # else:
-    #     continue 
-    #
     return(context)
 
 
@@ -174,22 +165,15 @@ def model_features(tumor_bam, control_bam, chrom, pos, alt, fasta):
             else:
                 wt_msa = wt_msa.fillna(value=-1).apply(pd.value_counts).loc[select].fillna(0)
 
-           # wt_msa = wt_msa.fillna(value=-1).apply(pd.value_counts).loc[select].fillna(0)
-           # tot_msa = seqs.fillna(value=-1).apply(pd.value_counts).loc[select].fillna(0)
-
             mut_quals = mut_quals.fillna(value=-1).median(axis = 0)
             mut_poss = mut_poss.fillna(value=-1).mean(axis = 0)
             wt_quals = wt_quals.fillna(value=-1).median(axis = 0)
             wt_poss = wt_poss.fillna(value=-1).mean(axis = 0)
-         #   tot_quals = quals.fillna(value=-1).median(axis = 0)
-          #  tot_poss = poss.fillna(value=-1).mean(axis = 0)
         
         mut_msa.loc["q"] = mut_quals
         mut_msa.loc["poss"] = mut_poss
         wt_msa.loc["q"] = wt_quals
         wt_msa.loc["poss"] = wt_poss
-        #tot_msa.loc["q"] = tot_quals
-        #tot_msa.loc["pos"] = tot_poss
         res += [tensor(np.array(mut_msa)).to(device), tensor(np.array(wt_msa)).to(device)]
 
         tumor = False

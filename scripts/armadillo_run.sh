@@ -116,7 +116,7 @@ fi
 
 ##Variant calling##
 samtools mpileup --output-QNAME -Q ${base_quality} -q ${mapq} -R -f ${ref_genome} ${TD_minibam} ${ND_minibam} | python3 ${mq2vcf_TDvsND} -i - -tb ${TD_minibam} -cb ${ND_minibam} -tc ${tumor_coverage} -n ${name} -r ${ref_genome} -tt ${tumor_threshold} -cm ${control_threshold} -gc ${GCcutoff} -m ${model} -q ${mapq} -Q ${base_quality} -cc ${control_coverage} -t ${threads} -p ${port} ${printopt} 2>> pipeline.log > ${name}_candidates.vcf 
-cat ${name}_candidates.vcf | python3 ${remove_dups} 100 > ${name}_nodupscandidates.vcf
+python3 ${remove_dups} ${name}_candidates.vcf 100 > ${name}_final.vcf
 lines=$(grep -v ^"#" ${name}_candidates.vcf | wc -l)
 if [ $lines -eq 0 ]
 then
