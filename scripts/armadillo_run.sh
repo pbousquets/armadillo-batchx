@@ -65,8 +65,8 @@ then
         echo -e " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage   \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 
 	else
-		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"
-		exit 0
+		echo "That case already exists. If you want to reanalyse it, please, use '--skip true'"  | tee -a pipeline.log
+		exit 1
 	fi
 
 	##Check if needed files exist##
@@ -77,8 +77,8 @@ then
 	##Check if it was already analysed##
 	if [ -f $TD_minibam ] || [ -f $ND_minibam ]
 	then
-		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."
-		exit 0
+		echo "FileExist ERROR:\nMake sure that $TD_minibam or $ND_minibam don't exist already. Else, run armadillo with --skip true."  | tee -a pipeline.log
+		exit 1
 	fi
 	
 	#Check if the reference genome had chr substring
@@ -96,13 +96,13 @@ else
         echo -e " Final options:   \n  Sample name: ${name}   \n  Genomes dir: $bam_dir   \n  Control genome: $control_genome   \n  Tumor genome: $tumor_genome   \n  ROIs list: $rois_list   \n  Armadillo data path: $armadillo_data   \n  Control coverage: $control_coverage   \n  Tumor coverage: $tumor_coverage    \n  Control maximum mutant reads: $control_threshold   \n  Tumor minimum mutant reads: $tumor_threshold   \n  Tumor base quality threshold: $base_quality   \n  Mapping quality threshold: $mapq   \n  GC content maximum: $GCcutoff   \n  Threads: $threads   \n  Skip: $skip   \n  Port: $port   \n  Print: $print" | tee -a pipeline.log
 		echo "Skipped minibam extraction." | tee -a pipeline.log
 	else
-		echo "$name doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"
-		exit 0
+		echo "$name doesn't seem to exist. Please, verify the it exists in your current directory or use '--skip false'"  | tee -a pipeline.log
+		exit 1
 	fi
 fi
 
 time=$(date +%x%t%X)
-echo ${time}: Finding candidates...
+echo ${time}: Finding candidates... | tee -a pipeline.log
 
 if [ -f ${name}_candidates.vcf ]
 then

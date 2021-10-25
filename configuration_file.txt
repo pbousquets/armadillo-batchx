@@ -1,6 +1,6 @@
 ### CONFIGURATION FILE ###
 ## DATA ##
-armadillo_data='' # Output dir of armadillo data-prep 
+installation_path=/data/programs/armadillo/
 name='' # sample name 
 bam_dir='' # Parent directory of the genomes 
 control_genome=''

@@ -155,8 +155,8 @@ evaluate(){
 	tag="$@"
 	if [ ! -f $file ]
 	then
-		echo -e "FILE NOT FOUND ERROR:\nThe $tag couldn't be found. Please, check if the path was correctly introduced: $file \n"
-		exit 0
+		echo -e "FILE NOT FOUND ERROR:\nThe $tag couldn't be found. Please, check if the path was correctly introduced: $file \n"  | tee -a pipeline.log
+		exit 1
 	fi
 }
 

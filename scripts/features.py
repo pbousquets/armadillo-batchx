@@ -44,6 +44,8 @@ class bam_features:
                         query_q = query_q[:left] + [np.nan] * length + query_q[left:]
                         query_readpos = query_readpos[:left] + [np.nan] * length + query_readpos[left:]
                         left += length
+                    elif cig_type == 5: #Hard-clipping -> do nothing because this fragment isn't present
+                        pass
                     else:
                         left += length
                     

@@ -34,7 +34,7 @@ do
             allCoords=$(sed -e 's/chr//g' ${blat_coords}/${file} | awk '{print "chr"$0}')
         fi
         
-        samtools view -@ 3 -u -f 1 -F 3072 -G 0x400 -G 0x4 ${sample} $allCoords 2>> pipeline.log | samtools fastq -@ 2 -N - 2>> pipeline.log |  bwa mem -t 3 -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view -uS - > ${type}_tmp_files/${file}.bam  &
+        samtools view -@ 3 -u -f 1 -F 3072 -G 0x400 -G 0x4 ${sample} --verbosity 2  $allCoords 2>> pipeline.log | samtools fastq -@ 2 --verbosity 2 -N -  2>> pipeline.log |  bwa mem -t 3 -R ${RG} ${miniFasta_dir}/${file}.fa - 2>/dev/null | samtools view --verbosity 2 -uS - --no-PG > ${type}_tmp_files/${file}.bam  &
         
         subp=$(($(jobs -r -p | wc -l)+1))
         if [ "$subp" -gt "$((threads - 1))" ]
@@ -58,22 +58,28 @@ echo -e "\n"${time}: Merging ${name} minibams. This may take a while | tee -a pi
 iter=0
 cd ${type}_tmp_files
 
-while [ $(ls | grep -v tmp | wc -l) -ne 0 ]
-do
-    iter=$((iter+1))
-    bams=$(ls | grep -v tmp | head -n 1000)
-    samtools merge -@ ${threads} tmp_${iter}.bam ${bams}
-    rm ${bams}
-done
+if [ "$(ls *bam | wc -l)" -gt 1 ]
+then
+    while [ $(ls | grep -v tmp | wc -l) -ne 0 ]
+    do
+        iter=$((iter+1))
+        bams=$(ls | grep -v tmp | head -n 1000)
+        samtools merge -@ ${threads} tmp_${iter}.bam ${bams} --verbosity 2 --no-PG
+        rm ${bams}
+    done
+else
+    mv *bam tmp_${iter}.bam
+fi
 
 if [ ${iter} -gt 1 ]
 then
-    samtools merge -@ ${threads} - tmp_*.bam | samtools sort -@ ${threads} -m ${maxRam}00000000 -o ../${name}${type}_merged.bam -
+    samtools merge -@ ${threads} - tmp_*.bam --verbosity 2 --no-PG | samtools sort -@ ${threads} -m ${maxRam}00000000 --verbosity 2 -o ../${name}${type}_merged.bam -
     rm tmp_*.bam
 else
-    samtools sort -@ ${threads} -m ${maxRam}00000000 -o ../${name}${type}_merged.bam tmp_${iter}.bam
+    samtools sort -@ ${threads} -m ${maxRam}00000000 --verbosity 2 -o ../${name}${type}_merged.bam tmp_${iter}.bam
     rm tmp_${iter}.bam
 fi
+
 cd ../
 rm -d ${type}_tmp_files
 samtools index ${name}${type}_merged.bam

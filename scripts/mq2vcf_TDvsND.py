@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from pickle import TRUE
 from sys import argv, stdin
 from re import findall, match
 from multiprocessing import Pool
@@ -91,16 +92,20 @@ def correct_variants_list(variants):
             continue
     return(variants, indel_list)
 
-def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, control_max):
+def most_common_variant(single_variants_list, full_variants_list_TD, full_variants_list_ND, threshold_TD, coverage_td, coverage_nd):
     alts = list()
     germline_list = list()
     overlimit = list()
     for variant in single_variants_list:
         count_TD = full_variants_list_TD.count(variant)
         count_ND = full_variants_list_ND.count(variant)
-        if 1.5 * args.tumor_coverage > count_TD >= threshold_TD and count_ND <= args.control_max : 
-            alts.append(variant)
-        elif 1.5 * args.tumor_coverage > count_TD >= threshold_TD and count_ND > args.control_max: #Store a list of those that were discarded due to high freq in control (likely SNPs)
+        if 1.5 * args.tumor_coverage > count_TD >= threshold_TD and count_ND <= args.control_max: 
+            pp = bayes_strand.contingency_bayes(count_TD, coverage_td, count_ND, coverage_nd, 10000, "greater")
+            if pp < 0.9: 
+                germline_list.append(variant)  #Store a list of those that were discarded due to high freq in control (likely SNPs and quimeric variants due to the mapping step)
+            else:
+                alts.append(variant)
+        elif 1.5 * args.tumor_coverage > count_TD >= threshold_TD and count_ND > args.control_max:
             germline_list.append(variant)
         elif 1.5 * args.tumor_coverage < count_TD >= threshold_TD and count_ND <= args.control_max:
             overlimit.append(variant)
@@ -144,6 +149,8 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
         column = line.strip().split("\t")
         try:
             ID = column[9]
+            if ID in badreads:
+                continue
             if ID not in allreads:
                 allreads.append(ID) #store all IDs in a list
             if column[0] == column[10] and all(int(i) == 0 for i in column[1:8]) and int(column[11]) == 0 and column[12] == column[10] and ID not in badreads: #if perfect match, the change in the read is not a mutation..
@@ -398,7 +405,7 @@ def main_function(line):
     else:
         pass
 
-    real_alts_td, germline_list, overlimit_list = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, args.control_max)
+    real_alts_td, germline_list, overlimit_list = most_common_variant(variants_list_td_set, variants_list_td, variants_list_nd, args.tumor_threshold, coverage_td, coverage_nd)
        
     ## Annotate alts with frequency over threshold in control sample.
     if args.full:

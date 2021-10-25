@@ -35,9 +35,9 @@ def fitArmNet(chrom, pos, alt, tumor, control, fasta, model):
     _, predicted = torch_max(outputs, 1)
 
     keep = True if predicted.item() == 1 else False
-    qual = outputs[0][1] - outputs[0][0]
-
-    return(keep, qual.item()) 
+    qual = outputs[0][1] - outputs[0][0]  #Qual: pred mut - pred no mut
+    qual = int(qual.item()*100)
+    return(keep, qual) 
 
 def main():
     args = arguments()
