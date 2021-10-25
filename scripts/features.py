@@ -35,10 +35,16 @@ class bam_features:
 
                 for cig_type, length in cigar:
                     if cig_type == 1: #Insertion -> Convert the whole insertion to one single position to avoid misalignments
-                        ins = "".join(query_seq[left-1:left+length]).lower()
-                        query_seq = query_seq[:left-1] + [ins] + query_seq[left+length:]
-                        query_q = query_q[:left-1] + [mean(query_q[left-1:left+length])] + query_q[left+length:]
-                        query_readpos = query_readpos[:left-1] + [mean(query_readpos[left-1:left+length])] + query_readpos[left+length:]
+                        if left == 0: # Once I found a case with a starting insertion that crashed. Process slightly differently this insertions:
+                            ins = "".join(query_seq[:length]).lower()
+                            query_seq = [ins] + query_seq[left+length:]
+                            query_q = [mean(query_q[:length])] + query_q[length:]
+                            query_readpos = [mean(query_readpos[:length])] + query_readpos[length:]
+                        else:
+                            ins = "".join(query_seq[left-1:left+length]).lower()
+                            query_seq = query_seq[:left-1] + [ins] + query_seq[left+length:]
+                            query_q = query_q[:left-1] + [mean(query_q[left-1:left+length])] + query_q[left+length:]
+                            query_readpos = query_readpos[:left-1] + [mean(query_readpos[left-1:left+length])] + query_readpos[left+length:]
                     elif cig_type == 2: #Deletion -> Fill in the gaps with "-"
                         query_seq = query_seq[:left] + ["-"] * length  + query_seq[left:]
                         query_q = query_q[:left] + [np.nan] * length + query_q[left:]
