@@ -1,0 +1,22 @@
+### CONFIGURATION FILE ###
+## DATA ##
+installation_path=/data/programs/armadillo/
+name='' # sample name 
+bam_dir='' # Parent directory of the genomes 
+control_genome=''
+tumor_genome=''
+rois_list=${armadillo_data}/'rois' # List of regions on interest (BED-formatted) 
+model=${installation_path}/lib/armNet_epoch80.pth
+
+# THRESHOLDS AND PARAMETERS #
+base_quality=30 # Minimum base quality 
+tumor_threshold=4 # Minimum reads in a variant 
+control_threshold=3 # Max. variant reads allowed in the control 
+tumor_coverage=30 #Sequencing coverage of the tumor sample
+control_coverage=30 #Sequencing coverage of the control sample
+GCcutoff=80 # Max. %GC allowed in reads 
+mapq=30 # Minimum mapq after realignment
+port='9006' # Port previously opened for gfClient (Blat) 
+print='TRUE' # Print a log file of discarded candidates 
+skip="false" # Skip the miniBAM alignment. Only use it to reanalyse with new parameters. 
+threads=3 # Threads 

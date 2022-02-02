@@ -1,0 +1,31 @@
+#!/bin/bash
+set -Eeuo pipefail
+
+installation_path=$(dirname $(realpath $0))
+ 
+scripts_dir=$installation_path/scripts
+. ${scripts_dir}/load_functions.sh #Load functions
+. ${scripts_dir}/default_config.txt  # Load default config
+if [ $# = 0 ]
+then
+	generalusage
+	exit
+fi
+
+mode=$1
+shift
+
+if [ "${mode}" = "run" ]
+then
+	. ${scripts_dir}/armadillo_run.sh
+elif [ "${mode}" = "config-file"  ]
+then
+	cp ${scripts_dir}/default_config.txt $(pwd)/configuration_file.txt #Create a config file
+elif [ "${mode}" = "data-prep" ]
+then
+	python3 ${scripts_dir}/data_prep.py "$@"
+else
+	echo "Mode error: please use armadillo 'run', 'config-file' or 'data-prep'"
+	generalusage
+	exit
+fi
