@@ -9,7 +9,6 @@ import subprocess
 import tarfile
 import time
 from sys import exit
-import wget
 
 
 ## Set environment
@@ -18,23 +17,19 @@ bxVcpus = int(os.environ['BX_VCPUS'])
 port = 9007
 tmpdir = "/tmp/"
 defaults = {
-    "params": { 
-        "control_coverage": 30, 
-        "tumor_coverage": 30, 
-        "control_threshold": 3, 
-        "tumor_threshold": 6, 
-        "base_quality": 30, 
-        "mapq": 30, 
-        "GCcutoff": 80
-    },
-    "dataprep_params": {
+        "controlCoverage": 30,
+        "tumorCoverage": 30,
+        "controlThreshold": 3,
+        "tumorThreshold": 6,
+        "baseQuality": 30,
+        "mapq": 30,
+        "GCcutoff": 80,
         "identity": 95,
         "lendiff": 15,
-        "mlen": 100
-    },
-    "return_bams": False,
-    "return_discarded": False,
-    "return_dataprep": False}
+        "mlen": 100,
+        "returnBams": False,
+        "returnDiscarded": False,
+        "returnDataprep": False}
 
 def compress_dir(source_dir, name):
     """
@@ -65,58 +60,61 @@ parsedJson = {**defaults, **parsedJson}
 project_name = parsedJson["name"]
 
 ## Start BLAT
-twobit = parsedJson["reference_blat"]
-os.symlink(parsedJson["reference_blat"], "/" + os.path.basename(parsedJson["reference_blat"]))
+twobit = parsedJson["referenceBlat"]
+os.symlink(parsedJson["referenceBlat"], "/" + os.path.basename(parsedJson["referenceBlat"]))
 subprocess.Popen(f'gfServer start localhost {port} {twobit}', shell=True) # Use Popen so it runs on background
 
 ## Prepare bams
 bamdir = '/tmp/bams/'
-parsedJson["bam_dir"] = bamdir
+parsedJson["bamDir"] = bamdir
 os.mkdir(bamdir)
 
-os.symlink(parsedJson["control_genome"], bamdir+os.path.basename(parsedJson["control_genome"]))
-os.symlink(parsedJson["tumor_genome"], bamdir+os.path.basename(parsedJson["tumor_genome"]))
+os.symlink(parsedJson["controlGenome"], bamdir+os.path.basename(parsedJson["controlGenome"]))
+os.symlink(parsedJson["tumorGenome"], bamdir+os.path.basename(parsedJson["tumorGenome"]))
 
-parsedJson["control_genome"] = os.path.basename(parsedJson["control_genome"])
-parsedJson["tumor_genome"] = os.path.basename(parsedJson["tumor_genome"])
+parsedJson["controlGenome"] = os.path.basename(parsedJson["controlGenome"])
+parsedJson["tumorGenome"] = os.path.basename(parsedJson["tumorGenome"])
+
+assert (parsedJson["controlGenome"].lower().endswith(".bam")), "Control genome is expected to be a BAM file. Are you sure it is indeed BAM formated/named?"
+assert (parsedJson["tumorGenome"].lower().endswith(".bam")), "Tumor genome is expected to be a BAM file. Are you sure it is indeed BAM formated/named?"
 
 if "tumorIndex" not in parsedJson:
     print("Indexing tumor bam", flush = True)
-    p1 = subprocess.Popen(f'samtools index -@ {bxVcpus/2} {bamdir+os.path.basename(parsedJson["tumor_genome"])}', shell = True)
+    p1 = subprocess.Popen(f'samtools index -@ {bxVcpus/2} {bamdir+os.path.basename(parsedJson["tumorGenome"])}', shell = True)
 else:
     os.symlink(parsedJson["tumorIndex"], bamdir + os.path.basename(parsedJson["tumorIndex"]))
 
 if "controlIndex" not in parsedJson:
     print("Indexing control bam", flush = True)
-    p2 = subprocess.Popen(f'samtools index -@ {bxVcpus/2} {bamdir+os.path.basename(parsedJson["control_genome"])}', shell = True)
+    p2 = subprocess.Popen(f'samtools index -@ {bxVcpus/2} {bamdir+os.path.basename(parsedJson["controlGenome"])}', shell = True)
 else:
     os.symlink(parsedJson["controlIndex"], bamdir + os.path.basename(parsedJson["controlIndex"]))
 
 
 ## Check data-prep 
-runDataPrep = False if "armadillo_data" in parsedJson else True
-custom_rois = True if "armadillo_data" in parsedJson and "rois_list" in parsedJson else False
+runDataPrep = False if "armadilloData" in parsedJson else True
+custom_rois = True if "armadilloData" in parsedJson and "roisList" in parsedJson else False
 
 if runDataPrep:
-    assert ("genome_ref" in parsedJson), "Missing genome reference fasta. Needed for running data-prep module. Please, include this file or a dataprep.gz file"
-    assert ("rois_list" in parsedJson), "Missing rois list. Needed for running data-prep module. Please, include this file or a dataprep.gz file"
-    fa = parsedJson["genome_ref"]
+    assert ("genomeRef" in parsedJson), "Missing genome reference fasta. Needed for running data-prep module. Please, include this file or a dataprep.gz file"
+    assert ("roisList" in parsedJson), "Missing rois list. Needed for running data-prep module. Please, include this file or a dataprep.gz file with dataprep"
+    fa = parsedJson["genomeRef"]
     destfa =  tmpdir + os.path.basename(fa)
     os.symlink(fa, destfa)
 
-    if "genome_ref_index" in parsedJson:
-        fai = parsedJson["genome_ref_index"]
+    if "genomeRefIndex" in parsedJson:
+        fai = parsedJson["genomeRefIndex"]
         os.symlink(fai, tmpdir + os.path.basename(fai))
     else:
         print("Indexing reference genome", flush = True)
         subprocess.check_call(f'samtools faidx {destfa}', shell=True)
 
-    parsedJson["rois"] = parsedJson["rois_list"]
+    parsedJson["rois"] = parsedJson["roisList"]
 
-    dataprep_params = parsedJson["dataprep_params"]
-    dataprep_params["genome_ref"] = destfa
+    dataprep_params = {key: parsedJson[key] for key in ["identity", "lendiff", "mlen"]}
+    parsedJson["genomeRef"] = destfa
 
-    dataprep_args = ["genome_ref", "rois", "identity", "lendiff", "mlen"]
+    dataprep_args = ["genomeRef", "rois", "identity", "lendiff", "mlen"]
 
     cmd_dataprep = f'armadillo data-prep --port {port} --output armadillo_data --rois {parsedJson["rois"]} '
     for attribute, value in dataprep_params.items():
@@ -127,21 +125,24 @@ if runDataPrep:
     subprocess.run(cmd_dataprep, shell = True)
 else:
     print("Extracting armadillo_data gz file", flush = True)
-    tar = tarfile.open(parsedJson['armadillo_data'])
+    tar = tarfile.open(parsedJson['armadilloData'])
     tar.extractall('.')
     tar.close()
 
-parsedJson['armadillo_data'] = os.path.abspath("armadillo_data")
+parsedJson['armadilloData'] = os.path.abspath("armadillo_data")
 
 
 ## Select rois
-parsedJson['rois_list'] = parsedJson['rois_list'] if custom_rois else os.path.abspath("armadillo_data") + "/rois"
+parsedJson['roisList'] = parsedJson['roisList'] if custom_rois else os.path.abspath("armadillo_data") + "/rois"
 
-run_args = ["name", "control_genome", "tumor_genome", "rois_list", "bam_dir", "model", "armadillo_data"]
+run_args = ["name", "controlGenome", "tumorGenome", "roisList", "bamDir", "model", "armadilloData"]
 cmd_run = ''
 for attribute, value in parsedJson.items():
     cmd_run += f'--{attribute} {value} ' if attribute in run_args else ''
-for attribute, value in parsedJson['params'].items():
+
+params = {key: parsedJson[key] for key in ["controlCoverage", "tumorCoverage", "controlThreshold", "tumorThreshold", "baseQuality", "mapq", "GCcutoff"]}
+
+for attribute, value in params.items():
     cmd_run += f'--{attribute} {value} '
 
 cmd_final = f'armadillo run {cmd_run} --threads {bxVcpus} --maxRam {bxMemory}  --port {port} --skip false --print false'
@@ -172,18 +173,18 @@ try:
 
     outputJson["vcf"] = f'{outputDir}/{project_name}/{project_name}_final.vcf' 
     
-    if parsedJson["return_bams"]:
-        outputJson["tumor_minibam"] = f'{outputDir}/{project_name}/{project_name}tumor_merged.bam' 
-        outputJson["tumor_minibam_idx"] = f'{outputDir}/{project_name}/{project_name}tumor_merged.bam.bai' 
-        outputJson["control_minibam"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam' 
-        outputJson["control_minibam_idx"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam.bai' 
+    if parsedJson["returnBams"]:
+        outputJson["tumorMinibam"] = f'{outputDir}/{project_name}/{project_name}tumor_merged.bam' 
+        outputJson["tumorMinibamIdx"] = f'{outputDir}/{project_name}/{project_name}tumor_merged.bam.bai' 
+        outputJson["controlMinibam"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam' 
+        outputJson["controlMinibamIdx"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam.bai' 
 
-    if parsedJson["return_dataprep"]:
-        compress_dir(os.path.abspath("armadillo_data"), "/batchx/output/armadillo_data.tar.gz")
+    if parsedJson["returnDataprep"]:
+        compress_dir(os.path.abspath("armadilloData"), "/batchx/output/armadillo_data.tar.gz")
         outputJson["dataprep"] = "/batchx/output/armadillo_data.tar.gz"
 
-    if parsedJson["return_discarded"]:
-        outputJson["discarded_variants"] = f'{outputDir}/{project_name}/discarded_variants.log' 
+    if parsedJson["returnDiscarded"]:
+        outputJson["discardedVariants"] = f'{outputDir}/{project_name}/discarded_variants.log' 
 
 except subprocess.CalledProcessError as e:
         print(e)

@@ -53,37 +53,37 @@ parse_arguments(){
 			-N | --name)
 			name=$VALUE
 			;;
-			-ad | --armadillo_data)
+			-ad | --armadilloData)
 			armadillo_data=$VALUE
 			;;
-			-R | --ref_genome)
+			-R | --refGenome)
 			ref_genome=$VALUE
 			;;
-			-r | --rois_list)
+			-r | --roisList)
 			rois_list=$VALUE
 			;;
-			-bd | --bam_dir)
+			-bd | --bamDir)
 			bam_dir=$VALUE
 			;;
-			-cc | --control_coverage)
+			-cc | --controlCoverage)
 			control_coverage=$VALUE
 			;;
-			-T | --tumor_genome)
+			-T | --tumorGenome)
 			tumor_genome=$VALUE
 			;;
 			-m | --model)
 			model=$VALUE
 			;;
-			-C | --control_genome)
+			-C | --controlGenome)
 			control_genome=$VALUE
 			;;
-			-tc | --tumor_coverage)
+			-tc | --tumorCoverage)
 			tumor_coverage=$VALUE
 			;;
-			-cm | --control_threshold)
+			-cm | --controlThreshold)
 			control_threshold=$VALUE
 			;;
-			-tt | --tumor_threshold)
+			-tt | --tumorThreshold)
 			tumor_threshold=$VALUE
 			;;
 			-q | --mapq)
@@ -114,10 +114,10 @@ parse_arguments(){
 			-gc | --GCcutoff)
 			GCcutoff=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
-			-Q | --base_quality)
+			-Q | --baseQuality)
 			base_quality=$(echo $VALUE | tr '[:upper:]' '[:lower:]')
 			;;
-			-tc | --tumor_cutoff)
+			-tc | --tumorCutoff)
 			tumor_cutoff=$VALUE
 			;;
 			-S | --skip)
@@ -169,5 +169,4 @@ check_chr(){
 	else
 		echo False
 	fi
-
 }
