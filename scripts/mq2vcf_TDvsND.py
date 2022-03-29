@@ -462,7 +462,8 @@ def main_function(line):
         else:
             pass
 
-        reads_left = polyfilter(reads_fasta) #Launch blat to remove perfect reads
+        #reads_left = polyfilter(reads_fasta) #Launch blat to remove perfect reads
+        reads_left = reads_fasta
         if len(reads_left) < args.tumor_threshold: #If there are enough reads, go on
             if args.full:
                 string = chrom+"\t"+str(pos)+"\t"+args.name+"\t"+element[0]+"\t"+element[1]

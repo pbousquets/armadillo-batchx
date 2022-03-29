@@ -24,34 +24,9 @@ defaults = {
         "baseQuality": 30,
         "mapq": 30,
         "GCcutoff": 80,
-        "identity": 95,
-        "lendiff": 15,
-        "mlen": 100,
         "returnBams": False,
-        "returnDiscarded": False,
-        "returnDataprep": False}
-
-def compress_dir(source_dir, name):
-    """
-    Compress directory into a tar.gz
-    """
-    with tarfile.open(name, "w:gz") as tar:
-        tar.add(source_dir, arcname=os.path.basename(source_dir))
-
-def validateBlatPorts(check_port = port, timeout = 120):
-    """
-    Run gfServer status in order to know if the started port is actually ready. Else, keep trying until timeout (seconds).
-    """
-    cmd_status = f'gfServer status localhost {check_port}'
-    start = time.time()
-    print("Checking ports. This may take a minute.", flush = True)
-    wait = True
-    while wait:
-        wait = True if subprocess.run(cmd_status, shell = True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0 else False 
-        if time.time() - start > timeout:
-            print(f'Blat server setting up timeout. Server could not be initialized after {timeout} seconds', flush = True)
-            exit(1)
-
+        "returnDiscarded": False}
+        
 ## Parse json
 with open("/batchx/input/input.json", "r") as inputFile:
     inputJson = inputFile.read()
@@ -59,10 +34,7 @@ parsedJson = json.loads(inputJson)
 parsedJson = {**defaults, **parsedJson}
 project_name = parsedJson["name"]
 
-## Start BLAT
-twobit = parsedJson["referenceBlat"]
-os.symlink(parsedJson["referenceBlat"], "/" + os.path.basename(parsedJson["referenceBlat"]))
-subprocess.Popen(f'gfServer start localhost {port} {twobit}', shell=True) # Use Popen so it runs on background
+assert (parsedJson["referenceVersion"] in ["hg19", "hg38"] or (parsedJson["referenceVersion"] == "custom") and "armadilloData" in parsedJson), "referenceVersion must be equal to 'custom' if not any of hg38 and hg19. Also, armadilloData must be provided with a tar.gz file"
 
 ## Prepare bams
 bamdir = '/tmp/bams/'
@@ -91,49 +63,28 @@ else:
     os.symlink(parsedJson["controlIndex"], bamdir + os.path.basename(parsedJson["controlIndex"]))
 
 
-## Check data-prep 
-runDataPrep = False if "armadilloData" in parsedJson else True
-custom_rois = True if "armadilloData" in parsedJson and "roisList" in parsedJson else False
+## Prepare ref
+custom_rois = True if "roisList" in parsedJson else False
 
-if runDataPrep:
-    assert ("genomeRef" in parsedJson), "Missing genome reference fasta. Needed for running data-prep module. Please, include this file or a dataprep.gz file"
-    assert ("roisList" in parsedJson), "Missing rois list. Needed for running data-prep module. Please, include this file or a dataprep.gz file with dataprep"
-    fa = parsedJson["genomeRef"]
-    destfa =  tmpdir + os.path.basename(fa)
-    os.symlink(fa, destfa)
-
-    if "genomeRefIndex" in parsedJson:
-        fai = parsedJson["genomeRefIndex"]
-        os.symlink(fai, tmpdir + os.path.basename(fai))
-    else:
-        print("Indexing reference genome", flush = True)
-        subprocess.check_call(f'samtools faidx {destfa}', shell=True)
-
-    parsedJson["rois"] = parsedJson["roisList"]
-
-    dataprep_params = {key: parsedJson[key] for key in ["identity", "lendiff", "mlen"]}
-    parsedJson["genomeRef"] = destfa
-
-    dataprep_args = ["genomeRef", "rois", "identity", "lendiff", "mlen"]
-
-    cmd_dataprep = f'armadillo data-prep --port {port} --output armadillo_data --rois {parsedJson["rois"]} '
-    for attribute, value in dataprep_params.items():
-        cmd_dataprep += f'--{attribute} {value} ' if attribute in dataprep_args else ''
-
-    validateBlatPorts(port)
-    print("Running armadillo-data prep", "Command:", cmd_dataprep, sep = "\n", flush = True)
-    subprocess.run(cmd_dataprep, shell = True)
+if parsedJson["referenceVersion"] == "hg19":
+    parsedJson['armadilloData'] = "/armadillo/lib/hg19/"
+elif parsedJson["referenceVersion"] == "hg38":
+    parsedJson['armadilloData'] = "/armadillo/lib/hg38/"
 else:
-    print("Extracting armadillo_data gz file", flush = True)
-    tar = tarfile.open(parsedJson['armadilloData'])
-    tar.extractall('.')
-    tar.close()
+    pass
 
-parsedJson['armadilloData'] = os.path.abspath("armadillo_data")
+print("Extracting armadillo_data gz file", flush = True)
+tar = tarfile.open(parsedJson['armadilloData'])
+tar.extractall('armadilloData')
+tar.close()
+subdir = os.listdir("armadilloData")
 
+if len(subdir) == 1: #Check if armadillodata prep was compressed as one single folder or not
+    parsedJson['armadilloData'] = os.path.abspath(f'armadilloData/{subdir[0]}')
+else:
+    parsedJson['armadilloData'] = os.path.abspath('armadilloData')
 
-## Select rois
-parsedJson['roisList'] = parsedJson['roisList'] if custom_rois else os.path.abspath("armadillo_data") + "/rois"
+parsedJson['roisList'] = parsedJson['roisList'] if custom_rois else parsedJson['armadilloData']+'/rois'
 
 run_args = ["name", "controlGenome", "tumorGenome", "roisList", "bamDir", "model", "armadilloData"]
 cmd_run = ''
@@ -145,17 +96,13 @@ params = {key: parsedJson[key] for key in ["controlCoverage", "tumorCoverage", "
 for attribute, value in params.items():
     cmd_run += f'--{attribute} {value} '
 
-cmd_final = f'armadillo run {cmd_run} --threads {bxVcpus} --maxRam {bxMemory}  --port {port} --skip false --print false'
-
-validateBlatPorts(port)
+cmd_final = f'armadillo run {cmd_run} --threads {bxVcpus} --maxRam {bxMemory} --skip false --print false'
 
 try: # Wait for bam indexes if needed
     p1.wait()
     p2.wait()
 except NameError:
     pass
-
-print("Blat ports are ready. Environment is also ready.", "Launching Armadillo with command:", cmd_final, sep = "\n", flush = True)
 
 ## Prepare output
 outputDir = "/batchx/output/" 
@@ -178,10 +125,6 @@ try:
         outputJson["tumorMinibamIdx"] = f'{outputDir}/{project_name}/{project_name}tumor_merged.bam.bai' 
         outputJson["controlMinibam"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam' 
         outputJson["controlMinibamIdx"] = f'{outputDir}/{project_name}/{project_name}control_merged.bam.bai' 
-
-    if parsedJson["returnDataprep"]:
-        compress_dir(os.path.abspath("armadilloData"), "/batchx/output/armadillo_data.tar.gz")
-        outputJson["dataprep"] = "/batchx/output/armadillo_data.tar.gz"
 
     if parsedJson["returnDiscarded"]:
         outputJson["discardedVariants"] = f'{outputDir}/{project_name}/discarded_variants.log' 

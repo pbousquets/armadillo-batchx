@@ -1,7 +1,7 @@
 {
   "name": "labxa/armadillo",
   "title": "A variant caller for detection of somatic mutations in repetitive regions",
-  "version": "1.1.4",
+  "version": "1.1.8",
   "schema": {
     "input": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -13,11 +13,11 @@
           "required": true,
           "description": "Experiment name"
         },
-        "control_genome": {
+        "controlGenome": {
           "type": "string",
           "format": "file",
           "required": true,
-          "description": "Control sample genome"
+          "description": "Control sample file. A BAM file is expected"
         },
         "controlIndex": {
           "type": "string",
@@ -25,11 +25,11 @@
           "required": false,
           "description": "Index of normal BAM. Not required but recommended"
         },
-        "tumor_genome": {
+        "tumorGenome": {
           "type": "string",
           "format": "file",
           "required": true,
-          "description": "Tumor sample genome"
+          "description": "Tumor sample file. A BAM file is expected"
         },
         "tumorIndex": {
           "type": "string",
@@ -37,121 +37,130 @@
           "required": false,
           "description": "Index of tumor BAM. Not required but recommended"
         },
-        "armadillo_data": {
+        "armadilloData": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "armadillo data-prep output compressed as tar.gz"
+          "description": "Tar.gz file generated with armadillo data-prep. If not provided, the algorithm will be run automatically before the actual analysis, but the genome reference FASTA (genome_ref) and a list of regions (rois_list) of interest must be provided"
         },
-        "rois_list": {
+        "roisList": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "List of ROIs to analyze instead of the whole list in armadillo_data"
+          "description": "List of regions of interest (ROIs) to analyze instead of the whole list in armadilloData"
         },
-        "genome_ref": {
+        "genomeRef": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "Reference genome fasta (only if no armadillo_data.gz is provided)"
+          "description": "Reference genome FASTA (only if no armadillo_data.gz is provided)"
         },
-        "genome_ref_index": {
+        "genomeRefIndex": {
           "type": "string",
           "format": "file",
           "required": false,
           "description": "Reference genome index"
         },
-        "reference_blat": {
+        "referenceBlat": {
           "type": "string",
           "format": "file",
           "required": true,
-          "description": "2bit file to use with blat"
+          "description": "2bit file to use with BLAT (more info on this type of files in our documentation)"
         },
-        "params":{
-          "type": "object",
+        "controlCoverage": {
+          "type": "integer",
           "required": false,
-          "properties": {
-            "control_coverage": {
-              "default": 30,
-              "minimum": 1,
-              "description": "Coverage of control genome"
-            },
-            "tumor_coverage": {
-              "default": 30,
-              "description": "Coverage of tumor genome"
-            },
-            "control_threshold": {
-              "default": 3,
-              "minimum": 1,
-              "description": "Maximum alternative-allele supportive reads allowed in the control"
-            },
-            "tumor_threshold": {
-              "default": 6,
-              "minimum": 2,
-              "description": "Minimum coverage required for a variant to be considered"
-            }, 
-            "base_quality": {
-              "default": 30,
-              "maximum": 60,
-              "description": "Minimum base quality required for the tumor genome"
-            },       
-            "mapq": {
-              "default": 30,
-              "maximum": 60,
-              "minimum": 1,
-              "description": "Minimum MapQ for reads after being collapsed"
-            },            
-            "GCcutoff": {
-              "default": 80,
-              "maximum": 100,
-              "minimum": 1,
-              "description": "Maximum GC% allowed"
-            }
-          }
+          "default": 30,
+          "minimum": 1,
+          "description": "Sequencing coverage of control genome (usually 30x)"
         },
-          "dataprep_params":{
-            "type": "object",
-            "required": false,
-            "properties": {
-              "identity": {
-                "default": 95,
-                "minimum": 1,
-                "maximum": 100,
-                "description": "Minimum identity required to consider a region as a copy"
-              },
-              "lendiff": {
-                "default": 15,
-                "minimum": 0,
-                "maximum": 100,
-                "description": "Maximum length difference allowed between each hit and the input sequence"
-              },
-              "mlen": {
-                "default": 100,
-                "minimum": 0,
-                "description": "Minimum length (bp) allowed to each gene"
-              }
-            }
-          },
-          "return_bams": {
-            "type": "boolean",
-            "required": false,
-            "default": false,
-            "description": "Return minibams generated by armadillo"
-          },
-          "return_discarded": {
-            "type": "boolean",
-            "required": false,
-            "default": false,
-            "description": "Return variants discarded by armadillo"
-          },
-          "return_dataprep": {
-            "type": "boolean",
-            "required": false,
-            "default": false,
-            "description": "Return data-prep results (useful if same analysis will be done on a batch of samples)"
+        "tumorCoverage": {
+          "type": "integer",
+          "required": false,
+          "minimum": 1,
+          "default": 30,
+          "description": "Sequencing coverage of tumor genome (usually 30x)"
+        },
+        "controlThreshold": {
+          "type": "integer",
+          "required": false,
+          "default": 3,
+          "minimum": 1,
+          "description": "Maximum alternative-allele supportive reads allowed in the control"
+        },
+        "tumorThreshold": {
+          "type": "integer",
+          "required": false,
+          "default": 6,
+          "minimum": 2,
+          "description": "Minimum alternative-allele supportive reads required for a variant to be considered"
+        }, 
+        "baseQuality": {
+          "type": "integer",
+          "required": false,
+          "default": 30,
+          "maximum": 60,
+          "description": "Minimum base quality required for the tumor genome"
+        },       
+        "mapq": {
+          "type": "integer",
+          "required": false,
+          "default": 30,
+          "maximum": 60,
+          "minimum": 1,
+          "description": "Minimum MapQ for reads after being collapsed"
+        },            
+        "GCcutoff": {
+          "type": "integer",
+          "required": false,
+          "default": 80,
+          "maximum": 100,
+          "minimum": 1,
+          "description": "Maximum GC% allowed"
+        },
+        "identity": {
+          "type": "integer",
+          "required": false,
+          "default": 95,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Minimum identity required to consider a region as a copy (data-prep)"
+        },
+        "lendiff": {
+          "type": "integer",
+          "required": false,
+          "default": 15,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Maximum length difference allowed between each hit and the input sequence when finding copies (data-prep)"
+        },
+        "mlen": {
+          "type": "integer",
+          "required": false,
+          "default": 100,
+          "minimum": 0,
+          "description": "Minimum length (bp) allowed to each ROI (data-prep)"
+        },
+        "returnBams": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Return mini BAMs generated by armadillo"
+        },
+        "returnDiscarded": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Return variants discarded by armadillo"
+        },
+        "returnDataprep": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "description": "Return data-prep results (useful if same analysis will be done on a batch of samples)"
         }
-    }
-  },
+      }
+    },
     "output": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "type": "object",
@@ -169,31 +178,31 @@
           "required": false,
           "description": "data-prep output compressed as tar.gz"
         },
-        "tumor_minibam": {
+        "tumorMinibam": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "Tumor minibam"
+          "description": "Tumor mini BAM"
         },
-        "tumor_minibam_idx": {
+        "tumorMinibamIdx": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "Tumor minibam index"
+          "description": "Tumor mini BAM index"
         },
-        "control_minibam": {
+        "controlMinibam": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "Control minibam"
+          "description": "Control mini BAM"
         },
-        "control_minibam_idx": {
+        "controlMinibamIdx": {
           "type": "string",
           "format": "file",
           "required": false,
-          "description": "Control minibam"
+          "description": "Control mini BAM"
         },
-        "discarded_variants": {
+        "discardedVariants": {
           "type": "string",
           "format": "file",
           "required": false,
@@ -202,10 +211,10 @@
       }
     }
   },
-  "changeLog": "Fix output schema",
+  "changeLog": "",
   "scm": "https://github.com/xa-lab/armadillo",
   "runtime": {
     "minMem": 5000
   },
-  "author": "Pablo Bousquets Muñoz & Xose S. Puente"
+  "author": "Pablo Bousquets Muñoz"
 }
