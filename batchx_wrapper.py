@@ -34,7 +34,7 @@ parsedJson = json.loads(inputJson)
 parsedJson = {**defaults, **parsedJson}
 project_name = parsedJson["name"]
 
-assert (parsedJson["referenceVersion"] in ["hg19", "hg38"] or (parsedJson["referenceVersion"] == "custom") and "armadilloData" in parsedJson), "referenceVersion must be equal to 'custom' if not any of hg38 and hg19. Also, armadilloData must be provided with a tar.gz file"
+assert (parsedJson["armadilloData"].endswith(".gz")), "Armadillo data-prep must be compressed as a gz file."
 
 ## Prepare bams
 bamdir = '/tmp/bams/'
@@ -65,13 +65,6 @@ else:
 
 ## Prepare ref
 custom_rois = True if "roisList" in parsedJson else False
-
-if parsedJson["referenceVersion"] == "hg19":
-    parsedJson['armadilloData'] = "/armadillo/lib/hg19/"
-elif parsedJson["referenceVersion"] == "hg38":
-    parsedJson['armadilloData'] = "/armadillo/lib/hg38/"
-else:
-    pass
 
 print("Extracting armadillo_data gz file", flush = True)
 tar = tarfile.open(parsedJson['armadilloData'])
