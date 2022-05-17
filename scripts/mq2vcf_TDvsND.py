@@ -161,12 +161,6 @@ def blat_filter(blat_result): #Filter the blat result to remove the reads with 1
     reads_left = list(set(allreads) - set(badreads))
     return(reads_left)
 
-def polyfilter(fasta): # Blat search
-    blat_command = ['gfClient', '-out=pslx', '-nohead','localhost', args.port, '', 'stdin', 'stdout']
-    result = check_output(blat_command, input = fasta.encode()).decode().strip().split("\n")
-    reads_left = blat_filter(result)
-    return (reads_left)
-
 def get_pileup(bam, chr, mutpos, reference_genome, mapq, bq):
     mutpos = int(mutpos)
     pileup = list()
@@ -462,7 +456,6 @@ def main_function(line):
         else:
             pass
 
-        #reads_left = polyfilter(reads_fasta) #Launch blat to remove perfect reads
         reads_left = reads_fasta
         if len(reads_left) < args.tumor_threshold: #If there are enough reads, go on
             if args.full:

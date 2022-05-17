@@ -113,7 +113,6 @@ Thus, __we do not recommend to use Armadillo for WES data__.
 
 * [BWA](http://bio-bwa.sourceforge.net/) (built with v.0.7.17)
 * [Samtools](https://www.htslib.org/doc/1.9/samtools.html) (built with v.1.9)
-* [gfClient](https://genome.ucsc.edu/goldenPath/help/blatSpec.html#gfClientUsage)  (built with v.35)
 * [Python3](https://www.python.org) (built with v.3.7)
 
 # Authors

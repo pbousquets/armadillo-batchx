@@ -18,7 +18,7 @@ GCcutoff=80 # Max. %GC allowed in reads
 mapq=30 # Minimum mapq after realignment
 
 maxRam=60 # Gb 
-port='9006' # Port previously opened for gfClient (Blat) 
+port='9006'
 print='true' # Print a log file of discarded candidates 
 skip="false" # Skip the miniBAM alignment. Only use it to reanalyse with new parameters. 
 threads=3 # Threads 

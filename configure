@@ -25,17 +25,6 @@ do
 done
 
 
-for program in gfClient gfServer
-do
-	echo -ne "\t - ${program}..."
-	if [ "$sudo" == "" ]
-	then
-		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && mv $program /usr/local/bin/$program &&  chmod +x /usr/local/bin/$program; }
-	else
-		[[ $(command -v ${program}) ]] && echo -e OK || { echo -e "$program needs to be installed."; wget "http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64.v385/blat/$program" && mv $program /usr/bin/$program && chmod +x /usr/bin/$program; }
-	fi
-done
-
 pip3 install -r $(dirname $(realpath $0))/requirements.txt
 
 ##Set the installation path##
