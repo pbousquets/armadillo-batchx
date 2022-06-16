@@ -1,3 +1,5 @@
+[![DOI](https://img.shields.io/badge/DOI-10.1038%2Fs41525--022--00292--2-green)](https://doi.org/10.1038/s41525-022-00292-2)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5846705.svg)](https://doi.org/10.5281/zenodo.5846705)
 [![Support this project by running your production jobs at BatchX](https://images.batchx.io/gh-badge-logo.svg)](https://platform.batchx.io/uniovi/profile "Support this project by running your production jobs at BatchX")
 
 # Context 
