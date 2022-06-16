@@ -1,3 +1,5 @@
+[![Support this project by running your production jobs at BatchX](https://images.batchx.io/gh-badge-logo.svg)](https://platform.batchx.io/uniovi/profile "Support this project by running your production jobs at BatchX")
+
 # Context 
 
 Mappability can be challenging in repetitive regions when analyzing NGS-derived data. Local **duplication of genomic** regions hampers the alignment of reads in those parts of the genome, since it **prevents unambiguously** **alingning reads**. Therefore, those reads are usually assigned a random location (among the possible ones) and a low _mapping quality_. Since reads are assigned a random location, **mutations** **are usually either** **missed** (mutated reads are dispersed among all possible alignment regions) or, even worse, **called multiple times** leading to the rise of false positives (enough reads to call a variant in multiple alignment regions). For this reason, **low mapping quality regions are often ignored** in variant calling pipelines.
